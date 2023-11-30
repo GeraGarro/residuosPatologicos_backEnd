@@ -1,5 +1,6 @@
 package com.appResP.residuosPatologicos.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,15 +10,17 @@ import lombok.Setter;
 public class Residuo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JoinColumn(unique = true)
+    @Column(unique = true)
   private Long id_residuo;
  @OneToOne
  @JoinColumn(name="id_TipoResiduo",referencedColumnName = "id_TipoResiduo")
   private Tipo_residuo t_residuo;
 
   private float peso;
+
   @ManyToOne(optional = false)
   @JoinColumn(name = "ticket_control")
+  @JsonBackReference
   private Ticket_control ticket_control;
 
     public Residuo() {
@@ -34,6 +37,16 @@ public class Residuo {
         this.t_residuo = t_residuo;
         this.peso = peso;
         this.ticket_control = ticket_control;
+    }
+
+    @Override
+    public String toString() {
+        return "Residuo{" +
+                "id_residuo=" + id_residuo +
+                ", t_residuo=" + t_residuo +
+                ", peso=" + peso +
+                ", ticket_control=" + ticket_control +
+                '}';
     }
 }
 

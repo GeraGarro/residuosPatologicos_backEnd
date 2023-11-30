@@ -9,7 +9,7 @@ import lombok.Setter;
 public class Tipo_residuo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JoinColumn(unique = true)
+    @JoinColumn
     private Long id_tipoResiduo;
 
     private String nombre_tipoResiduo;

@@ -1,5 +1,6 @@
 package com.appResP.residuosPatologicos.services;
 
+import com.appResP.residuosPatologicos.dto.TicketDTO;
 import com.appResP.residuosPatologicos.models.Residuo;
 import com.appResP.residuosPatologicos.models.Ticket_control;
 import com.appResP.residuosPatologicos.models.Transportista;
@@ -14,8 +15,9 @@ public interface ITicketControl_Service {
     public List<Ticket_control> getTickets();
 
     //guardar un nuevo Ticket
-    public void saveTicket(Ticket_control tk);
+    public void saveTicket(TicketDTO tkDTO);
 
+    public void saveTicket(Ticket_control tk);
     //Eliminar un Ticket de BD
     public boolean deleteTicket(Long id_Ticket);
 

@@ -1,0 +1,8 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+.crud-table{
+    background-color: rgb(34, 34, 177);
+}

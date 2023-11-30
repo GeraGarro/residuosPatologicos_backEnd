@@ -35,4 +35,6 @@ public class Transportista {
         this.cuit = cuit;
         this.estado_Transp = estadoTransp;
     }
+
+
 }

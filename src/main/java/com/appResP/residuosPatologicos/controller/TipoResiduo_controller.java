@@ -2,20 +2,18 @@ package com.appResP.residuosPatologicos.controller;
 
 import com.appResP.residuosPatologicos.models.ErrorResponse;
 import com.appResP.residuosPatologicos.models.Tipo_residuo;
-import com.appResP.residuosPatologicos.models.Transportista;
 import com.appResP.residuosPatologicos.services.TipoResiduo_Service;
 import jakarta.persistence.EntityNotFoundException;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("api/tipoResiduo" )
+@RequestMapping("/api/tipoResiduo")
 public class TipoResiduo_controller {
 
     @Autowired
@@ -69,9 +67,9 @@ public class TipoResiduo_controller {
 
     //Obtener UN tipo De residuo en DB (verificado)
 
-    @GetMapping("unTipoResiduo/{id_tipoResiduo}")
+    @GetMapping("info_unTipoRes/{id_tipoResiduo}")
     public ResponseEntity<Object> getTransportista(@PathVariable Long id_tipoResiduo) {
-        Tipo_residuo tipoRe = tipoResServ.findTipoResiduo(id_tipoResiduo);
+       Tipo_residuo tipoRe = tipoResServ.findTipoResiduo(id_tipoResiduo);
         if (tipoRe != null) {
             return ResponseEntity.ok(tipoRe);
         } else {

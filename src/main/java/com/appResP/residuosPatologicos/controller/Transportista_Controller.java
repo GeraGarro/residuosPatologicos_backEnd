@@ -71,7 +71,7 @@ public class Transportista_Controller {
 
     //Obtener un transportista por su ID (validado)
 
-    @GetMapping("/datosTransportista/{id_transportista}")
+    @GetMapping("/infoTransportista/{id_transportista}")
     public ResponseEntity<Transportista> getTransportista(@PathVariable Long id_transportista){
         Transportista transp=transpoService.findTransportista(id_transportista);
         if(transp !=null){
@@ -85,14 +85,14 @@ public class Transportista_Controller {
 
 
     //modificar un transportista
-    @PutMapping("/transportista/editar/{id}")
+    @PutMapping("/editar/{id_Ori_transportista}")
     public ResponseEntity <Object> editTransportista(@PathVariable Long id_Ori_transportista,
         @RequestParam(required = false,name="nombre") String nuevoNombre,
         @RequestParam(required = false,name="apellido") String nuevoApellido,
         @RequestParam(required = false,name="cuit") String nuevoCuit,
         @RequestParam(required = false,name="estadoTransp") boolean nuevoEstado){
 try{
-    Transportista transpEditado=transpoService.editTransportista(id_Ori_transportista,nuevoNombre,nuevoNombre,nuevoCuit,nuevoEstado);
+    Transportista transpEditado=transpoService.editTransportista(id_Ori_transportista,nuevoNombre,nuevoApellido,nuevoCuit,nuevoEstado);
     return ResponseEntity.ok(transpEditado);
 }catch (EntityNotFoundException e){
     String mensajeError="No se encontró el Transportista con el ID proporcionado";

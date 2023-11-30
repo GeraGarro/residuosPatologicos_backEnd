@@ -3,6 +3,7 @@ package com.appResP.residuosPatologicos.dto;
 import com.appResP.residuosPatologicos.models.Generador;
 import com.appResP.residuosPatologicos.models.Residuo;
 import com.appResP.residuosPatologicos.models.Transportista;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,9 +11,11 @@ import java.time.LocalDate;
 import java.util.List;
 @Getter @Setter
 public class TicketDTO {
+    private Long id_TicketDTO;
     private Transportista transportista;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate fecha;
     private boolean estado;
     private Generador generador;
-    private List<Residuo> listaResiduos;
+    private List<ResiduoDTO> listaResiduos;
 }
