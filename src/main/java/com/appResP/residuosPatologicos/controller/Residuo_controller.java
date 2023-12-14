@@ -21,6 +21,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("api/Residuo")
 public class Residuo_controller {
 
@@ -42,7 +43,7 @@ public class Residuo_controller {
        }
 
        // Validar que el campo t_residuo no sea nulo
-       if (residuo.getT_residuo() == null) {
+       if (residuo.getTipo_residuo() == null) {
            return false;
        }
 
@@ -71,6 +72,8 @@ public class Residuo_controller {
         }
 
     }
+
+
 
 //Crear y Guardar un Residuo en BD
 /*@PostMapping("/ticket/{idTicketControl}/tipoResiduo/{idTipoResiduo}/crear")
@@ -121,6 +124,12 @@ public ResponseEntity<String> createResiduo(
     }
 
    }
+
+    @GetMapping("/residuo_Por_Ticket/{idTicket}")
+    public List<ResiduoDTO> obtenerResiduosPorTicket(@PathVariable Long idTicket) {
+        return resService.getResiduosDTObyIdTicket(idTicket);
+    }
+
     //Obtener Un Residuo de DB(validado)
 
     @GetMapping("unResiduo/{id_residuo}")
@@ -154,13 +163,13 @@ public ResponseEntity<String> createResiduo(
 
            // Validar datos antes de la actualización
            if (residuoDTO.getTipo_residuo() != null) {
-               residuo.setT_residuo(residuoDTO.getTipo_residuo());
+               residuo.setTipo_residuo(residuoDTO.getTipo_residuo());
            }
            if (residuoDTO.getPeso() != null) {
                residuo.setPeso(residuoDTO.getPeso());
            }
-           if (residuoDTO.getTk() != null) {
-               residuo.setTicket_control(residuoDTO.getTk());
+           if (residuoDTO.getTicket_control() != null) {
+               residuo.setTicket_control(residuoDTO.getTicket_control());
            }
 
            // Guardar los cambios del residuo en la base de datos

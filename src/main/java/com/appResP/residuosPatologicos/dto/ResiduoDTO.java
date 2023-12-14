@@ -11,7 +11,7 @@ public class ResiduoDTO {
   private Long id_residuo;
   private Tipo_residuo tipo_residuo;
   private Float peso;
-  private Ticket_control tk;
+  private Ticket_control ticket_control;
   public ResiduoDTO() {
     // Constructor sin argumentos necesario para la deserialización
   }

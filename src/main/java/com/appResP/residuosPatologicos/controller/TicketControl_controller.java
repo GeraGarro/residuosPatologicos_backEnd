@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("api/TicketControl")
 public class TicketControl_controller {
 
@@ -53,7 +54,7 @@ private boolean ticketValidacion(Ticket_control tk){
 }
 
 //Traer Lista de todos los Ticket existentes en BD
-    @CrossOrigin(origins = "http://127.0.0.1:5500")
+
     @GetMapping("/verTodos")
     public ResponseEntity<List<Ticket_control>> getListaTickets(){
     List<Ticket_control> listaTodosTickets=tkService.getTickets();
@@ -91,7 +92,7 @@ private boolean ticketValidacion(Ticket_control tk){
           List<Residuo> listaResiduos = new ArrayList<>();
           for (ResiduoDTO residuoDTO : tkNuevo.getListaResiduos()) {
               Residuo residuo = new Residuo();
-              residuo.setT_residuo(residuoDTO.getTipo_residuo());
+              residuo.setTipo_residuo(residuoDTO.getTipo_residuo());
               residuo.setPeso(residuoDTO.getPeso());
               residuo.setTicket_control(ticket); // Asignar la relación bidireccional
               listaResiduos.add(residuo);

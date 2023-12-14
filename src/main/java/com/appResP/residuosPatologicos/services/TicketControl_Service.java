@@ -67,13 +67,13 @@ private ITicket_Repository ticketrepo;
 
         for (ResiduoDTO residuoDTO : residuoDTOs) {
             Residuo residuo = new Residuo();
-            residuo.setT_residuo(residuoDTO.getTipo_residuo());
+            residuo.setTipo_residuo(residuoDTO.getTipo_residuo());
             residuo.setPeso(residuoDTO.getPeso());
 
             // Manejar tanto TicketDTO como Ticket_control
-            if (residuoDTO.getTk() != null) {
+            if (residuoDTO.getTicket_control() != null) {
                 // Convertir TicketDTO a Ticket_control si es necesario
-                residuo.setTicket_control(residuoDTO.getTk());
+                residuo.setTicket_control(residuoDTO.getTicket_control());
             } else {
                 // Establecer directamente Ticket_control si es proporcionado
                 residuo.setTicket_control(ticket);
