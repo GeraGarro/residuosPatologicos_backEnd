@@ -1,79 +1,44 @@
 package com.appResP.residuosPatologicos.models;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-
+import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
 
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
-@Getter @Setter
 public class Ticket_control {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JoinColumn(unique = true)
     private Long id_Ticket;
-    @OneToOne
-    @JoinColumn(name="id_transportista",referencedColumnName = "id_transportista")
-    private Transportista transportista;
-    private LocalDate fechaEmisionTk;
-    private boolean estadoTicket;
 
-    @OneToOne
-    @JoinColumn(name="id_Generador", referencedColumnName = "id_Generador")
+    @ManyToOne(targetEntity = Transportista.class, fetch = FetchType.LAZY)
+
+    @JoinColumn(name = "id_transportista")
+    private Transportista transportista;
+
+    @ManyToOne(targetEntity = Hoja_ruta.class, fetch = FetchType.EAGER)
+    private Long hojaRuta;
+
+    @JoinColumn(name = "fecha_emision")
+    private LocalDate fechaEmision;
+    private boolean estado;
+
+    @ManyToOne  (targetEntity = Generador.class, fetch = FetchType.LAZY)
     private Generador generador;
 
-    @OneToMany(mappedBy = "ticket_control", cascade = CascadeType.ALL,orphanRemoval = true)
-    @JsonManagedReference
+    @OneToMany(mappedBy = "ticketControl",fetch = FetchType.LAZY,cascade = CascadeType.ALL,orphanRemoval = true)
+    @JsonIgnore
     List<Residuo> listaResiduos;
 
-    public Ticket_control() {
-    }
+    @ManyToOne(targetEntity = Certificado.class, fetch = FetchType.EAGER)
+    private Certificado certificado;
 
-    public Ticket_control(Long id_Ticket, Transportista transportista, LocalDate fechaEmisionTk, boolean estadoTicket, Generador generador, List<Residuo> listaResiduos) {
-        this.id_Ticket = id_Ticket;
-        this.transportista = transportista;
-        this.fechaEmisionTk = fechaEmisionTk;
-        this.estadoTicket = estadoTicket;
-        this.generador = generador;
-        this.listaResiduos = listaResiduos;
-    }
 
-    public Ticket_control(Transportista transportista, LocalDate fechaEmisionTk, boolean estadoTicket, Generador generador, List<Residuo> listaResiduos) {
-        this.transportista = transportista;
-        this.fechaEmisionTk = fechaEmisionTk;
-        this.estadoTicket = estadoTicket;
-        this.generador = generador;
-        this.listaResiduos = listaResiduos;
-    }
 
-    @Override
-    public String toString() {
-        return "Ticket_control{" +
-                "id_Ticket=" + id_Ticket +
-                ", transportista=" + transportista +
-                ", fechaEmisionTk=" + fechaEmisionTk +
-                ", estadoTicket=" + estadoTicket +
-                ", generador=" + generador +
-                ", listaResiduos=" + getListaResiduosIds() +
-                '}';
-    }
-
-    private String getListaResiduosIds() {
-        if (listaResiduos == null || listaResiduos.isEmpty()) {
-            return "[]";
-        }
-
-        StringBuilder ids = new StringBuilder("[");
-        for (Residuo residuo : listaResiduos) {
-            ids.append(residuo.getId_residuo()).append(", ");
-        }
-        ids.delete(ids.length() - 2, ids.length());
-        ids.append("]");
-
-        return ids.toString();
-    }
 }

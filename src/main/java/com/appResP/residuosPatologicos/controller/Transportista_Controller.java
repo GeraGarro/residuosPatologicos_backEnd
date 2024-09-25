@@ -1,112 +1,135 @@
 package com.appResP.residuosPatologicos.controller;
 
-import com.appResP.residuosPatologicos.models.ErrorResponse;
+import com.appResP.residuosPatologicos.DTO.TransportistaDTO;
 import com.appResP.residuosPatologicos.models.Transportista;
-import com.appResP.residuosPatologicos.services.Transportista_service;
-import jakarta.persistence.EntityNotFoundException;
+import com.appResP.residuosPatologicos.services.imp.Transportista_service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/transportista")
 public class Transportista_Controller {
 
     @Autowired
-    private Transportista_service transpoService;
+    private Transportista_service transportistaService;
 
-    //Metodo para validar un objeto Transportista
+    //Ver un Determinado  Transportista
+@GetMapping("/transportista/{id}")
+public ResponseEntity<?> findTransportistaById(@PathVariable Long id){
+    Optional<Transportista> transportistaOptional= transportistaService.findByID(id);
 
-    private boolean transportistaValidacion(Transportista transpVal){
-       if(transpVal.getNombre_Transp()==null|| transpVal.getApellido_Transp()==null||transpVal.getCuit()==null){
-           return false;
-       }
-       return true;
-    }
+    if(transportistaOptional.isPresent()){
+        Transportista transportista=transportistaOptional.get();
 
+        TransportistaDTO transportistaDTO= TransportistaDTO.builder()
+                .id_transportista(transportista.getId_transportista())
+                .nombre(transportista.getNombre())
+                .apellido(transportista.getApellido())
+                .cuit(transportista.getCuit())
+                .telefono(transportista.getTelefono())
+                .domicilio(transportista.getDomicilio())
+                .estado(transportista.isEstado())
+                .build();
 
-//Traer La lista de  todos los Transportistas(Verificado)
-
-    @GetMapping("/verTodos")
-    public ResponseEntity<List<Transportista>> getListaTransportistas(){
-        List<Transportista> listaTransportista=transpoService.getTransportistas();
-        if (listaTransportista.isEmpty()) {
-            return ResponseEntity.noContent().build();
-
-        }else{
-           return ResponseEntity.ok(listaTransportista);
-        }
-    }
-
-    //Crear un nuevo Transportista (Verificado)
-    @PostMapping("/crear")
-    public ResponseEntity<String> createTransportista(@RequestBody Transportista transp){
-       if(transportistaValidacion(transp)){
-           transpoService.saveTransporista(transp);
-           return  ResponseEntity.status(HttpStatus.CREATED).body("Ha sido Incorporado un nuevo Transportista");
-       }else{
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Datos de Entrada no valido");
-       }
-    }
-
-    //Eliminar un transportista (Verificado)
-    @DeleteMapping("/eliminar/{id}")
-    public ResponseEntity<String> deleteTransportista(@PathVariable Long id){
-        boolean condicionParaEliminar=transpoService.deleteTransportista(id);
-
-        if(condicionParaEliminar){
-            return ResponseEntity.ok("El transportista Se eliminó");
-        }else{
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró el Transportista con el ID proporcionado");
-
-        }
-
+        return ResponseEntity.ok(transportistaDTO);
 
     }
-
-
-    //Obtener un transportista por su ID (validado)
-
-    @GetMapping("/infoTransportista/{id_transportista}")
-    public ResponseEntity<Transportista> getTransportista(@PathVariable Long id_transportista){
-        Transportista transp=transpoService.findTransportista(id_transportista);
-        if(transp !=null){
-            return ResponseEntity.ok(transp);
-
-        }else{
-            return ResponseEntity.notFound().build();
-        }
-
-    }
-
-
-    //modificar un transportista
-    @PutMapping("/editar/{id_Ori_transportista}")
-    public ResponseEntity <Object> editTransportista(@PathVariable Long id_Ori_transportista,
-        @RequestParam(required = false,name="nombre") String nuevoNombre,
-        @RequestParam(required = false,name="apellido") String nuevoApellido,
-        @RequestParam(required = false,name="cuit") String nuevoCuit,
-        @RequestParam(required = false,name="estadoTransp") boolean nuevoEstado){
-try{
-    Transportista transpEditado=transpoService.editTransportista(id_Ori_transportista,nuevoNombre,nuevoApellido,nuevoCuit,nuevoEstado);
-    return ResponseEntity.ok(transpEditado);
-}catch (EntityNotFoundException e){
-    String mensajeError="No se encontró el Transportista con el ID proporcionado";
-    ErrorResponse errorResponse=new ErrorResponse(mensajeError);
-    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-
-}catch (Exception e){
-    String mensajeError="Error al editar Transportista";
-    ErrorResponse errorResponse=new ErrorResponse(mensajeError);
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    return ResponseEntity.notFound().build();
 }
+//Mostrar Todos los Registros
+@GetMapping("/Todos")
+    public ResponseEntity<?> findTransportistaAll(){
+     List <TransportistaDTO> listaTransportista= transportistaService.findAll().stream()
+             .map(transportista -> TransportistaDTO.builder()
+                     .id_transportista(transportista.getId_transportista())
+                     .nombre(transportista.getNombre())
+                     .apellido(transportista.getApellido())
+                     .cuit(transportista.getCuit())
+                     .telefono(transportista.getTelefono())
+                     .domicilio(transportista.getDomicilio())
+                     .estado(transportista.isEstado())
+                     .build()).toList();
 
-    }
+     return ResponseEntity.ok(listaTransportista);
+}
+//Creación De nuevo Transportista
+@PostMapping("/crear")
+    public ResponseEntity <?> saveTransportista(@RequestBody TransportistaDTO transportistaDTO) throws Exception {
+   try {
+       if(transportistaDTO.getNombre().isBlank()||
+               transportistaDTO.getApellido().isBlank()||
+               transportistaDTO.getCuit().isBlank()){
+           return ResponseEntity.badRequest().build();
+       }
+       transportistaService.save(Transportista.builder()
+               .nombre(transportistaDTO.getNombre())
+               .apellido(transportistaDTO.getApellido())
+               .cuit(transportistaDTO.getCuit())
+               .telefono(transportistaDTO.getTelefono())
+               .domicilio(transportistaDTO.getDomicilio())
+               .estado(transportistaDTO.isEstado())
+               .build());
 
+       return ResponseEntity.created(new URI("/api/transportista/crear")).body("Transportista Ha sido Creado");
+   }catch (IllegalArgumentException e){
+       return ResponseEntity.badRequest().body("No ha sido posible crear el Transportista");
+   }catch (Exception e) {
+       // Error 500 - Internal Server Error
+       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ha ocurrido un error interno al intentar crear el Transportista");
+   }
 
 
 }
+
+    //Eliminación de Transportista
+    @DeleteMapping("eliminar/{id}")
+    public ResponseEntity <?> deleteTransportista(@PathVariable Long id){
+
+        if(id!=null){
+            try {
+                transportistaService.deletebyID(id);
+                return  ResponseEntity.ok("El transportista ha sido Eliminado");
+            }catch (DataIntegrityViolationException e){
+                String mensajeError = "No se puede eliminar el Transportista con ID " + id + " ya que tiene restriccion por estar en Ticket";
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(mensajeError);
+
+            }
+
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    //Actualizacion de Registro Transportista
+    @PutMapping("update/{id}")
+    public ResponseEntity <?> updateTransportista(@PathVariable Long id,@RequestBody TransportistaDTO transportistaDTO){
+    Optional<Transportista> transportistaOptional=transportistaService.findByID(id);
+
+    if(transportistaOptional.isPresent()){
+        Transportista transportista=transportistaOptional.get();
+        transportista.setNombre(transportistaDTO.getNombre());
+        transportista.setApellido(transportistaDTO.getApellido());
+        transportista.setCuit(transportistaDTO.getCuit());
+        transportista.setDomicilio(transportistaDTO.getDomicilio());
+        transportista.setTelefono(transportistaDTO.getTelefono());
+        transportista.setEstado(transportistaDTO.isEstado());
+
+        transportistaService.save(transportista);
+
+        return ResponseEntity.ok("Transportista con id: " + id + " ha sido modificado");
+    }
+
+    return ResponseEntity.notFound().build();
+
+
+    }
+}
+

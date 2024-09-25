@@ -1,23 +1,21 @@
 package com.appResP.residuosPatologicos.controller;
 
-import com.appResP.residuosPatologicos.dto.ResiduoDTO;
-import com.appResP.residuosPatologicos.models.ErrorResponse;
+import com.appResP.residuosPatologicos.DTO.ResiduoDTO;
+import com.appResP.residuosPatologicos.DTO.TipoResiduoDTO;
 import com.appResP.residuosPatologicos.models.Residuo;
 import com.appResP.residuosPatologicos.models.Ticket_control;
 import com.appResP.residuosPatologicos.models.Tipo_residuo;
-import com.appResP.residuosPatologicos.services.Residuo_Service;
-import com.appResP.residuosPatologicos.services.TicketControl_Service;
-import com.appResP.residuosPatologicos.services.TipoResiduo_Service;
-import jakarta.persistence.EntityNotFoundException;
+import com.appResP.residuosPatologicos.services.imp.Residuo_service;
+import com.appResP.residuosPatologicos.services.imp.TicketControl_service;
+import com.appResP.residuosPatologicos.services.imp.TipoResiduo_Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.ResultSet;
+import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RestController
@@ -25,166 +23,134 @@ import java.util.Optional;
 @RequestMapping("api/Residuo")
 public class Residuo_controller {
 
-   @Autowired
-   private Residuo_Service resService;
-    @Autowired
-    private TicketControl_Service tkService;
-    @Autowired
-    private TipoResiduo_Service tipoResiduoService;
-   private boolean ResiduoValidacion (Residuo residuo){
-       // Verificar si el objeto residuo es nulo
-       if (residuo == null) {
-           return false;
-       }
+@Autowired
+    Residuo_service residuoService;
+@Autowired
+    TicketControl_service ticketControlService;
+@Autowired
+    TipoResiduo_Service tipoResiduoService;
+@GetMapping("/unResiduo/{id}")
+  public ResponseEntity <?> findResiduoById (@PathVariable Long id){
+    Optional<Residuo> residuoOptional= residuoService.findByID(id);
 
-       // Validar que el campo id_residuo no sea nulo
-       if (residuo.getId_residuo() == null) {
-           return false;
-       }
+    if (residuoOptional.isPresent()){
+        Residuo residuo=residuoOptional.get();
+        ResiduoDTO residuoDTO=ResiduoDTO.builder()
+                .id(residuo.getId())
+                .tipoResiduo(TipoResiduoDTO.builder()
+                        .id(residuo.getTipoResiduo().getId())
+                        .nombre(residuo.getTipoResiduo().getNombre())
+                        .estado(residuo.getTipoResiduo().isEstado()).build())
 
-       // Validar que el campo t_residuo no sea nulo
-       if (residuo.getTipo_residuo() == null) {
-           return false;
-       }
+                .peso(residuo.getPeso())
+                .id_TicketControl(residuo.getTicketControl().getId_Ticket())
+                .build();
 
-       // Validar que el campo peso sea mayor que cero
-       if (residuo.getPeso() <= 0) {
-           return false;
-       }
-
-       // Validar que el campo ticket_control no sea nulo
-       if (residuo.getTicket_control() == null) {
-           return false;
-       }
-
-       // Si todas las validaciones pasan, el residuo es válido
-       return true;
-   }
-
-   //Traer la Lista de todos los Residuos
-    @GetMapping("/verTodos")
-    public ResponseEntity<List<Residuo>> getListaResiduos(){
-       List<Residuo> listaTodosResiduos=resService.getResiduos();
-        if(listaTodosResiduos.isEmpty()){
-            return ResponseEntity.noContent().build();
-        }else{
-            return ResponseEntity.ok(listaTodosResiduos);
-        }
-
-    }
-
-
-
-//Crear y Guardar un Residuo en BD
-/*@PostMapping("/ticket/{idTicketControl}/tipoResiduo/{idTipoResiduo}/crear")
-public ResponseEntity<String> createResiduo(
-        @PathVariable Long idTicketControl,
-        @PathVariable Long idTipoResiduo,
-        @RequestBody Residuo residuo) {
-
-    try {
-        // Buscar el Ticket_control
-        Ticket_control tkExistente = tkService.findTicket(idTicketControl)
-                .orElseThrow(() -> new NoSuchElementException("Ticket Control no encontrado"));
-
-        // Buscar el Tipo_residuo
-        Tipo_residuo tipoResiduo = tipoResiduoService.findTipoResiduo(idTipoResiduo);
-
-        // Asignar las relaciones al residuo
-        residuo.setTicket_control(tkExistente);
-        residuo.setT_residuo(tipoResiduo);
-
-        // Validar el residuo
-        if (ResiduoValidacion(residuo)) {
-            // Guardar el residuo
-            resService.saveResiduo(residuo);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Ha sido exitosamente creado el residuo");
-        } else {
-            // Retornar un error de datos no válidos
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Datos de Entrada no Válido " + residuo.toString());
-        }
-    } catch (NoSuchElementException e) {
-        // Manejar el error de Ticket Control no encontrado
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    } catch (Exception e) {
-        // Manejar otros posibles errores
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno del servidor: " + e.getMessage());
-    }
-}
-
-*/
-//Eliminar un Residuo en BD(validado)
-@DeleteMapping("eliminar/{id}")
-    public ResponseEntity<String> deleteResiduo(@PathVariable Long id){
-       boolean condicionParaEliminar=resService.deleteResiduo(id);
-    if(condicionParaEliminar){
-        return ResponseEntity.ok("Ha sido Eliminado Correctamente");
+        return ResponseEntity.ok(residuoDTO);
     }else {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontro el Residuo con el ID proporcionado");
+        return ResponseEntity.notFound().build();
     }
-
-   }
-
-    @GetMapping("/residuo_Por_Ticket/{idTicket}")
-    public List<ResiduoDTO> obtenerResiduosPorTicket(@PathVariable Long idTicket) {
-        return resService.getResiduosDTObyIdTicket(idTicket);
-    }
-
-    //Obtener Un Residuo de DB(validado)
-
-    @GetMapping("unResiduo/{id_residuo}")
-    public ResponseEntity<Object> getResiduo(@PathVariable Long id_residuo){
-    Optional<Residuo> residuo=resService.findResiduo(id_residuo);
-    if(residuo!=null){
-        return ResponseEntity.ok(residuo);
-    }else{
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No existe el Residuo con el ID proporcionado");
-    }
-   }
-
-   //Editar un Residuo(verificado)
-   @PutMapping("/editar/{id}")
-   public ResponseEntity<Object> editResiduo(
-           @PathVariable Long id,
-           @RequestBody ResiduoDTO residuoDTO) {
-       try {
-           // Validar si el ID en el DTO coincide con el ID en la URL
-           if (!residuoDTO.getId_residuo().equals(id)) {
-               return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                       .body("El ID en el cuerpo del mensaje no coincide con el ID de la URL");
-           }
-
-           Optional<Residuo> residuoOpt = resService.findResiduo(id);
-           if (!residuoOpt.isPresent()) {
-               return ResponseEntity.notFound().build();
-           }
-           Residuo residuo = residuoOpt.get();
-
-
-           // Validar datos antes de la actualización
-           if (residuoDTO.getTipo_residuo() != null) {
-               residuo.setTipo_residuo(residuoDTO.getTipo_residuo());
-           }
-           if (residuoDTO.getPeso() != null) {
-               residuo.setPeso(residuoDTO.getPeso());
-           }
-           if (residuoDTO.getTicket_control() != null) {
-               residuo.setTicket_control(residuoDTO.getTicket_control());
-           }
-
-           // Guardar los cambios del residuo en la base de datos
-           resService.saveResiduo(residuo);
-
-           return ResponseEntity.ok(residuo);
-       } catch (EntityNotFoundException e) {
-           String mensajeError = "No se encontró el residuo con el ID proporcionado";
-           ErrorResponse errorResponse = new ErrorResponse(mensajeError);
-           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-       } catch (Exception e) {
-           String mensajeError = "Error al editar el Residuo: " + e.getMessage();
-           ErrorResponse errorResponse = new ErrorResponse(mensajeError);
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-       }
-   }
 }
+
+@GetMapping("/verTodos")
+    public ResponseEntity<?> findResiduoAll(){
+    List <ResiduoDTO> listaResiduos=residuoService.findAll().stream()
+            .map(residuo -> ResiduoDTO.builder()
+                    .id(residuo.getId())
+                    .tipoResiduo(TipoResiduoDTO.builder()
+                            .id(residuo.getTipoResiduo().getId())
+                            .nombre(residuo.getTipoResiduo().getNombre())
+                            .estado(residuo.getTipoResiduo().isEstado())
+                            .build())
+                    .peso(residuo.getPeso())
+                    .id_TicketControl(residuo.getTicketControl().getId_Ticket())
+                    .build()).toList();
+
+    return ResponseEntity.ok(listaResiduos);
+}
+
+@PostMapping("/crear")
+    public ResponseEntity<?> saveResiduo(@RequestBody @Validated ResiduoDTO residuoDTO) throws Exception{
+try {
+    Optional<Ticket_control> ticketControlOptional=ticketControlService.findByID(residuoDTO.getId_TicketControl());
+
+    Optional<Tipo_residuo> tipoResiduoOptional= tipoResiduoService.findByID(residuoDTO.getTipoResiduo().getId());
+    if(ticketControlOptional.isPresent()){
+        Ticket_control ticketControl=ticketControlOptional.get();
+        Tipo_residuo tipoResiduo=tipoResiduoOptional.get();
+
+        if(residuoDTO.getPeso()<0){
+            residuoDTO.setPeso(0);
+        }
+        Residuo residuo=Residuo.builder()
+                .tipoResiduo(tipoResiduo)
+                .peso(residuoDTO.getPeso())
+                .ticketControl(ticketControl)
+                .build();
+        residuoService.save(residuo);
+
+        return ResponseEntity.ok("El residuo ha sido creado");
+    }
+
+
+    URI location = URI.create("/api/Residuo/crear"); // Construir la URL
+
+    return ResponseEntity.created(location).body("Residuo Incorporado a Ticket "+residuoDTO.getId_TicketControl());
+}catch (DataIntegrityViolationException e) {
+    return ResponseEntity.badRequest().body("No se puede crear dos residuos con el mismo tipo en el mismo ticket.");
+} catch (Exception e) {
+    return ResponseEntity.badRequest().body("Error al procesar la solicitud.");
+}
+}
+
+
+    @DeleteMapping("/eliminar/{id}")
+    public ResponseEntity<?> deleteResiduo(@PathVariable Long id){
+    if (id!=null){
+        try {
+            residuoService.deletebyID(id);
+            return ResponseEntity.ok("El Residuo con ID: "+id+ " ha sido Eliminado");
+
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body("El Residuo con ID " + id + " no existe");
+
+
+        }
+    }
+    return ResponseEntity.notFound().build();
+
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateResiduo(@PathVariable Long id,@RequestBody ResiduoDTO residuoDTO){
+    Optional<Residuo> residuoOptional=residuoService.findByID(id);
+    Optional<Tipo_residuo> tipoResiduoOptional=tipoResiduoService.findByID(residuoDTO.getTipoResiduo().getId());
+    Optional<Ticket_control> ticketControlOptional=ticketControlService.findByID(residuoDTO.getId_TicketControl());
+    try {
+        if(residuoOptional.isPresent()){
+            Residuo residuoEdit=residuoOptional.get();
+            if(tipoResiduoOptional.isPresent()){
+                Tipo_residuo tipoResiduo=tipoResiduoOptional.get();
+                residuoEdit.setTipoResiduo(tipoResiduo);
+            }
+            if(residuoDTO.getPeso()>0){
+                residuoEdit.setPeso(residuoDTO.getPeso());
+            }
+            Ticket_control ticketControl=ticketControlOptional.get();
+            residuoEdit.setTicketControl(ticketControl);
+
+            residuoService.save(residuoEdit);
+            return ResponseEntity.ok("Residuo con id: " + id + " ha sido modificado");
+
+        }  else {
+            return ResponseEntity.badRequest().body("El Residuo con ID " + id + " no existe");
+        }
+    }catch (Exception e) {
+        return ResponseEntity.badRequest().body("No ha sido posible realizar la modificación");
+    }
+
+    }
+}
+
+
 

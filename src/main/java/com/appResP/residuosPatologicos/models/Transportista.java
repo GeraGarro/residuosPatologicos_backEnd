@@ -1,40 +1,37 @@
 package com.appResP.residuosPatologicos.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
-@Getter @Setter
+
 public class Transportista {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JoinColumn(unique = true)
     private Long id_transportista;
-    private String nombre_Transp;
-    private String apellido_Transp;
-    @Column(name="cuit Transportista", unique = true)
+
+    private String nombre;
+    private String apellido;
     private String cuit;
-    private boolean estado_Transp;
+    private String telefono;
+    private String domicilio;
+    private boolean estado;
 
-    public Transportista() {
-    }
+    @OneToMany(targetEntity = Ticket_control.class, fetch = FetchType.LAZY,mappedBy = "transportista")
+    @JsonIgnore
+    private List <Ticket_control> listaTickets;
 
-    public Transportista(Long id_transportista, String nombreTransp, String apellidoTransp, String cuit, boolean estadoTransp) {
-        this.id_transportista = id_transportista;
-        this.nombre_Transp = nombreTransp;
-        this.apellido_Transp = apellidoTransp;
-        this.cuit = cuit;
-        this.estado_Transp = estadoTransp;
-    }
-
-    public Transportista(String nombreTransp, String apellidoTransp, String cuit, boolean estadoTransp) {
-        this.nombre_Transp = nombreTransp;
-        this.apellido_Transp = apellidoTransp;
-
-        this.cuit = cuit;
-        this.estado_Transp = estadoTransp;
-    }
+    @OneToMany(targetEntity = Certificado.class, fetch = FetchType.LAZY,mappedBy="transportista")
+    @JsonIgnore
+    private List <Certificado> listaCertificados;
 
 
 }

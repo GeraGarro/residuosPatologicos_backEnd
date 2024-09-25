@@ -1,98 +1,139 @@
 package com.appResP.residuosPatologicos.controller;
 
-import com.appResP.residuosPatologicos.models.ErrorResponse;
+import com.appResP.residuosPatologicos.DTO.GeneradorDTO;
 import com.appResP.residuosPatologicos.models.Generador;
-import com.appResP.residuosPatologicos.services.Generador_Service;
-import jakarta.persistence.EntityNotFoundException;
+import com.appResP.residuosPatologicos.services.imp.Generador_service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/Generador")
 
 public class Generador_controller{
 
     @Autowired
-    private Generador_Service generador_Serv;
+    private Generador_service generadorService;
 
-    //Metodo para validar un objeto Generador
-    private boolean generadorValidacion(Generador gen){
-        if(gen.getNombre_generador()==null || gen.getDireccion_Generador()==null || gen.getCuit_generador()==null ){
-            return false;
-        }return true;
-    }
+    @GetMapping("/infogenerador/{id}")
+    public ResponseEntity<?> findByGeneradorId(@PathVariable Long id){
+        Optional<Generador> generadorOptional=generadorService.findByID(id);
 
-    //Ver todos los generadores existente en la BD
-    @GetMapping("/verTodos")
-    public ResponseEntity<List<Generador>> getGeneradores(){
-        List<Generador> listaGeneradores= generador_Serv.getGeneradores();
-        if(listaGeneradores.isEmpty()){
-            return ResponseEntity.noContent().build();
-        }else{
-            return ResponseEntity.ok(listaGeneradores);
+        if (generadorOptional.isPresent()) {
+            Generador generador = generadorOptional.get();
+            GeneradorDTO generadorDTO = GeneradorDTO.builder()
+                    .id(generador.getId())
+                    .nombre(generador.getNombre())
+                    .direccion(generador.getDireccion())
+                    .cuit(generador.getCuit())
+                    .estado(generador.isEstado())
+                    .telefono(generador.getTelefono())
+                    .legajo(generador.getLegajo())
+                    .estado(generador.isEstado())
+                    .build();
+
+            return ResponseEntity.ok(generadorDTO);
         }
+        return ResponseEntity.notFound().build();
     }
 
-    //Guardar Un Generador en la BD(Verificado)
-    @PostMapping("/crear")
-    public ResponseEntity<String> createGenerador(@RequestBody Generador gen){
-       if(generadorValidacion(gen)){
-           generador_Serv.saveGenerador(gen);
-           return ResponseEntity.status(HttpStatus.CREATED).body("Ha sido creado exitosamente EL Generador");
-       }else {
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Datos de Entrada no válidos");
-       }
 
+   @GetMapping("/verTodos")
+public ResponseEntity<?> findGeneradorAll(){
+    List<GeneradorDTO> listaGeneradores= generadorService.findAll().stream()
+            .map(generador -> GeneradorDTO.builder()
+                    .id(generador.getId())
+                    .nombre(generador.getNombre())
+                    .direccion(generador.getDireccion())
+                    .cuit(generador.getCuit())
+                    .telefono(generador.getTelefono())
+                    .legajo(generador.getLegajo())
+                    .estado(generador.isEstado())
+                    .build())
+            .toList();
+    return ResponseEntity.ok(listaGeneradores);
+    }
+@PostMapping("/crear")
+    public ResponseEntity<?> saveGenerador(@RequestBody GeneradorDTO generadorDTO){
+
+    try {
+
+        if(generadorDTO.getNombre().isBlank()||
+            generadorDTO.getCuit().isBlank()||
+            generadorDTO.getDireccion().isBlank()){
+            return ResponseEntity.badRequest().body(Map.of("message", "Faltan Datos Por Ingresar"));
+         }
+
+        Generador generador=Generador.builder()
+                .nombre(generadorDTO.getNombre())
+                .direccion(generadorDTO.getDireccion())
+                .cuit(generadorDTO.getCuit())
+                .telefono(generadorDTO.getTelefono())
+                .legajo(generadorDTO.getLegajo())
+                .estado(generadorDTO.isEstado())
+                .build();
+
+        generadorService.save(generador);
+        URI location = URI.create("/api/generador/crear"); // Construir la URL
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Generador Incorporado");
+        return ResponseEntity.created(location).body(response);
+    }catch (Exception e){
+        return ResponseEntity.badRequest().body(Map.of("message", "Faltante de Datos, no he posible Realizar la Incorporacion del Generador"));
     }
 
-    //Eliminar un Generador de la BD(verificado)
-    @DeleteMapping("/eliminar/{id}")
-    public ResponseEntity<String> deleteGenerador(@PathVariable Long id){
-        boolean condicionParaEliminar=generador_Serv.deleteGenerador(id);
-        if (condicionParaEliminar) {
+    }
+@DeleteMapping("/eliminar/{id}")
+    public ResponseEntity<?> deleteGenerador(@PathVariable Long id){
+        if (id!=null){
+            try {
+                generadorService.deletebyID(id);
 
-            return ResponseEntity.ok("Ha sido Exitosamente eliminado el Generador");
-        }else{
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró el ID del Generador proporcionado");
+                return ResponseEntity.ok("El Generador con ID "+id+ " ha sido Eliminado");
+            }catch (DataIntegrityViolationException e){
+                String mensajeError = "No se puede eliminar el Generador con ID " + id + " ya que tiene restriccion por estar en Ticket";
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(mensajeError);
+
+            }
+
         }
-
-    }
-    //Obtener un Generador de la BD
-    @GetMapping("unGenerador/{id}")
-    public ResponseEntity<Object> getGenerador(@PathVariable Long id){
-        Generador gen=generador_Serv.findGenerador(id);
-        if(gen!=null){
-        return ResponseEntity.ok(gen);
-    }else{
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No existe el Residuo con el ID proporcionado");
-        }
-    }
-    //Editar un tipo de Generador(Verificado)
-    @PutMapping("/editar/{id_Generador}")
-    public ResponseEntity<Object> editGenerador(@PathVariable Long id_Generador,
-                                   @RequestParam(required = false,name = "nuevoNombreGen")String nuevoNombre,
-                                    @RequestParam(required = false,name = "nuevoCuitGen")String nuevoCuit,
-                                    @RequestParam(required = false,name = "nuevaDireccionGen")String direccionNuevo,
-                                   @RequestParam(required = false,name = "nuevoEstadoGen")boolean estadoNuevo){
-
-       try{
-           Generador gen=generador_Serv.editGenerador(id_Generador,nuevoNombre,nuevoCuit,direccionNuevo,estadoNuevo);
-        return ResponseEntity.ok(gen);
-       }catch (EntityNotFoundException e){
-           String mensajeError="No se encontró el Generador con el ID proporcionado ";
-           ErrorResponse errorResponse=new ErrorResponse(mensajeError);
-           return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-       }catch (Exception e){
-           String mensajeError="Error al editar Generador";
-           ErrorResponse errorResponse=new ErrorResponse(mensajeError);
-       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-       }
-       }
-
-
-
+        return ResponseEntity.notFound().build();
 }
+
+@PutMapping("/update/{id}")
+    public ResponseEntity<?> updateGenerador(@PathVariable Long id, @RequestBody GeneradorDTO generadorDTO){
+        Optional<Generador> generadorOptional=generadorService.findByID(id);
+try {
+        if(generadorOptional.isPresent()){
+
+            Generador generadorEdit=generadorOptional.get();
+
+            generadorEdit.setNombre(generadorDTO.getNombre());
+            generadorEdit.setDireccion(generadorDTO.getDireccion());
+            generadorEdit.setCuit(generadorDTO.getCuit());
+            generadorEdit.setTelefono(generadorDTO.getTelefono());
+            generadorEdit.setLegajo(generadorDTO.getLegajo());
+            generadorEdit.setEstado(generadorDTO.isEstado());
+            generadorService.save(generadorEdit);
+
+            return ResponseEntity.ok("Generador con id: " + id + " ha sido modificado");
+        } else {
+            return ResponseEntity.badRequest().body("El generador con ID " + id + " no existe");
+        }
+} catch (Exception e) {
+    return ResponseEntity.badRequest().body("No ha sido posible realizar la modificación");
+}
+}
+}
+
+
+

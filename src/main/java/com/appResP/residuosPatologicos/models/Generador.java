@@ -1,37 +1,30 @@
 package com.appResP.residuosPatologicos.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
-@Getter @Setter
+
 public class Generador {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JoinColumn(unique = true)
-    private Long id_Generador ;
+    private Long id;
 
-    private String nombre_generador;
-    private String cuit_generador;
-    private String direccion_Generador;
-    private boolean estado_actividad_generador;
+    private String nombre;
+    private String cuit;
+    private String direccion;
+    private String legajo;
+    private String telefono;
+    private boolean estado;
 
-    public Generador() {
-    }
-
-    public Generador(Long id_Generador, String nombre_generador, String cuit_generador, String direccion_Generador, boolean estado_actividad_generador) {
-        this.id_Generador = id_Generador;
-        this.nombre_generador = nombre_generador;
-        this.cuit_generador = cuit_generador;
-        this.direccion_Generador = direccion_Generador;
-        this.estado_actividad_generador = estado_actividad_generador;
-    }
-
-    public Generador(String nombre_generador, String cuit_generador, String direccion_Generador, boolean estado_actividad_generador) {
-        this.nombre_generador = nombre_generador;
-        this.cuit_generador = cuit_generador;
-        this.direccion_Generador = direccion_Generador;
-        this.estado_actividad_generador = estado_actividad_generador;
-    }
+    @OneToMany(targetEntity = Ticket_control.class, fetch = FetchType.LAZY,mappedBy = "generador")
+    @JsonIgnore
+    private List <Ticket_control> listaTickets;
 }

@@ -1,53 +1,46 @@
 package com.appResP.residuosPatologicos.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
-@Getter @Setter
-public class Residuo {
+
+
+@Table(uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"tipo_residuo", "ticket_control"})
+})
+public class Residuo implements Comparable<Residuo> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true)
-  private Long id_residuo;
- @OneToOne
- @JoinColumn(name="id_TipoResiduo",referencedColumnName = "id_TipoResiduo")
-  private Tipo_residuo tipo_residuo;
+  private Long id;
+ @ManyToOne( targetEntity = Tipo_residuo.class,fetch = FetchType.LAZY)
+
+ @JoinColumn(name = "tipo_residuo", referencedColumnName = "id")
+  private Tipo_residuo tipoResiduo;
 
   private float peso;
 
-  @ManyToOne(optional = false)
+  @ManyToOne(optional = false,targetEntity = Ticket_control.class)
   @JoinColumn(name = "ticket_control")
-  @JsonBackReference
-  private Ticket_control ticket_control;
-
-    public Residuo() {
-    }
-
-    public Residuo(Long id_residuo, Tipo_residuo t_residuo, float peso, Ticket_control ticket_control) {
-        this.id_residuo = id_residuo;
-        this.tipo_residuo = t_residuo;
-        this.peso = peso;
-        this.ticket_control = ticket_control;
-    }
-
-    public Residuo(Tipo_residuo t_residuo, float peso, Ticket_control ticket_control) {
-        this.tipo_residuo = t_residuo;
-        this.peso = peso;
-        this.ticket_control = ticket_control;
-    }
+  @JsonIgnore
+  private Ticket_control ticketControl;
 
     @Override
-    public String toString() {
-        return "Residuo{" +
-                "id_residuo=" + id_residuo +
-                ", t_residuo=" + tipo_residuo +
-                ", peso=" + peso +
-                ", ticket_control=" + ticket_control +
-                '}';
+    public int compareTo(Residuo otro) {
+        // Compara los nombres de los tipos de residuo
+        return otro.getTipoResiduo().getCodigo().compareTo(this.tipoResiduo.getCodigo());
     }
+
+
 }
 
 

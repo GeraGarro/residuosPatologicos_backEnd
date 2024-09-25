@@ -1,99 +1,95 @@
 package com.appResP.residuosPatologicos.controller;
-
-import com.appResP.residuosPatologicos.models.ErrorResponse;
+import com.appResP.residuosPatologicos.DTO.TipoResiduoDTO;
 import com.appResP.residuosPatologicos.models.Tipo_residuo;
-import com.appResP.residuosPatologicos.services.TipoResiduo_Service;
-import jakarta.persistence.EntityNotFoundException;
+import com.appResP.residuosPatologicos.services.imp.TipoResiduo_Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/tipoResiduo")
 public class TipoResiduo_controller {
 
     @Autowired
-    private TipoResiduo_Service tipoResServ;
+    TipoResiduo_Service tipoResiduoService;
 
-    //Metodo para validar un objeto Tipo Residuo
-    private boolean tipoResiduoValidacion(Tipo_residuo tipRes) {
-        if (tipRes.getNombre_tipoResiduo() == null || tipRes.getNombre_tipoResiduo().trim().isEmpty()) {
-            return false;
-        }
-        return true;
+    //Muestra el un unico Elemento de Tipo de Residuo
+@GetMapping("/unTipoResiduo/{id}")
+    public ResponseEntity <?> findTipoResiduobyId(@PathVariable Long id){
+    Optional<Tipo_residuo> tipoResiduoOptional=tipoResiduoService.findByID(id);
+if (tipoResiduoOptional.isPresent()){
+    Tipo_residuo tipoResiduo=tipoResiduoOptional.get();
+    TipoResiduoDTO tipoResiduoDTO= TipoResiduoDTO.builder()
+            .id(tipoResiduo.getId())
+            .nombre(tipoResiduo.getNombre())
+            .codigo(tipoResiduo.getCodigo())
+            .estado(tipoResiduo.isEstado()).build();
+
+  return ResponseEntity.ok(tipoResiduoDTO);
+}
+return ResponseEntity.notFound().build();
+}
+//Muestra todos los tipos de residuos
+@GetMapping("/verTodos")
+    public ResponseEntity <?> findTipoAll (){
+    List<TipoResiduoDTO> listaDeTipos= tipoResiduoService.findAll().stream()
+            .map(tipoResiduo -> TipoResiduoDTO.builder()
+                    .id(tipoResiduo.getId())
+                    .nombre(tipoResiduo.getNombre())
+                    .estado(tipoResiduo.isEstado())
+                    .codigo(tipoResiduo.getCodigo())
+                    .build()).toList();
+    return ResponseEntity.ok(listaDeTipos);
     }
 
-    //Traer La lista de todos los Tipos Residuos(Validado)
-    @GetMapping("/verTodos")
-    public ResponseEntity<List<Tipo_residuo>> getListaTipoResiduos() {
-        List<Tipo_residuo> listaTodosTipoRes=tipoResServ.getTipoResiduos();
-        if(listaTodosTipoRes.isEmpty()){
-            return ResponseEntity.noContent().build();
-        }else{
-            return ResponseEntity.ok(listaTodosTipoRes);
-        }
-
-    }
-
-    //Guardar un Tipo de Residuo en BD(Validado)
+    //Creación de un Nuevo Tipo de Residuo
     @PostMapping("/crear")
-    public ResponseEntity<String> createTipRes(@RequestBody Tipo_residuo tipRes) {
-        if (tipoResiduoValidacion(tipRes)) {
-            tipoResServ.saveTipoResiduo(tipRes);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Ha sido exitosamente creado el Tipo De Residuo");
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Datos de Entrada no válidos");
-        }
-
+    public ResponseEntity <?> saveTipoResiduo(@RequestBody TipoResiduoDTO tipoResiduoDTO) throws URISyntaxException {
+    if(!tipoResiduoDTO.getNombre().isBlank()){
+        tipoResiduoService.save(Tipo_residuo.builder()
+                .nombre(tipoResiduoDTO.getNombre())
+                .codigo(tipoResiduoDTO.getCodigo())
+                .estado(tipoResiduoDTO.isEstado())
+                .build());
+        return ResponseEntity.created(new URI("/api/tipoResiduo/crear")).body("El Tipo de Residuo Ha sido Creado");
+    }
+    return ResponseEntity.badRequest().build();
     }
 
-    //Eliminar un Tipo de Residuo en BD(validado)
+    //Eliminacion de Un Tipo de Residuo
     @DeleteMapping("/eliminar/{id}")
-    public ResponseEntity<String> deleteTipRes(@PathVariable Long id) {
-        boolean condicionEliminacion = tipoResServ.deleteTipoResiduo(id);
-
-        if (condicionEliminacion) {
-            return ResponseEntity.ok("Ha sido Eliminado Exitosamente");
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró el Tipo De Residuo con el ID proporcionado");
-
-        }
-
+    public ResponseEntity <?> deleteTipoResiduo(@PathVariable Long id){
+    if(id!=null){
+        tipoResiduoService.deletebyID(id);
+        return ResponseEntity.ok("El Tipo Residuo con "+id+" ha sido Eliminado");
     }
-
-    //Obtener UN tipo De residuo en DB (verificado)
-
-    @GetMapping("info_unTipoRes/{id_tipoResiduo}")
-    public ResponseEntity<Object> getTransportista(@PathVariable Long id_tipoResiduo) {
-       Tipo_residuo tipoRe = tipoResServ.findTipoResiduo(id_tipoResiduo);
-        if (tipoRe != null) {
-            return ResponseEntity.ok(tipoRe);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No existe el Tipo De Residuo con el ID proporcionado");
-        }
+    return ResponseEntity.notFound().build();
     }
+//Actualizacion de un Elemento de Tipo Residuo
+  @PostMapping("/update/{id}")
+    public ResponseEntity<?> updateTipoResiduo(@PathVariable Long id, @RequestBody TipoResiduoDTO tipoResiduoDTO){
+    Optional<Tipo_residuo> tipoResiduoOptional=tipoResiduoService.findByID(id);
+try {
+    if(tipoResiduoOptional.isPresent()){
+        Tipo_residuo tipoResiduo=tipoResiduoOptional.get();
+        tipoResiduo.setNombre(tipoResiduoDTO.getNombre());
+        tipoResiduo.setCodigo(tipoResiduoDTO.getCodigo());
+        tipoResiduo.setEstado(tipoResiduoDTO.isEstado());
 
-    //Editar un tipo De residuo
-    @PutMapping("/editar/{id}")
-    public ResponseEntity<Object> editTipoResiduo
-    (@PathVariable Long id,
-    @RequestParam(required = false, name = "nuevoNombre") String nuevoNombre,
-    @RequestParam(required = false, name = "nuevoEstado") boolean nuevoEstado) {
-        try {
-            Tipo_residuo tipoRes=tipoResServ.editTipoResiduo(id, nuevoNombre, nuevoEstado);
-            return ResponseEntity.ok(tipoRes);
-        } catch (EntityNotFoundException e) {
-            String mensajeError = "No se encontró el Tipo de Residuo con el ID proporcionado.";
-            ErrorResponse errorResponse = new ErrorResponse(mensajeError);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-        } catch (Exception e) {
-            String mensajeError="Error al editar el Tipo de Residuo";
-            ErrorResponse errorResponse = new ErrorResponse(mensajeError);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
+        tipoResiduoService.save(tipoResiduo);
+        return  ResponseEntity.ok().body("El Tipo De residuo con el "+id+" ha sido Modificaod");
+    }else {
+        return ResponseEntity.badRequest().body("El generador con ID " + id + " no existe");
     }
+}catch (Exception e) {
+    return ResponseEntity.badRequest().body("No ha sido posible realizar la modificación");
+}
+  }
+
 }

@@ -1,31 +1,30 @@
 package com.appResP.residuosPatologicos.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
-@Getter @Setter
-public class Tipo_residuo {
+
+public class Tipo_residuo  {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JoinColumn
-    private Long id_tipoResiduo;
+    private Long id;
 
-    private String nombre_tipoResiduo;
-    private boolean estadoActivo;
+    private String codigo;
+    private String nombre;
+    private boolean estado;
 
-    public Tipo_residuo() {
-    }
-
-    public Tipo_residuo(Long id_tipoResiduo, String nombre_tipoResiduo, boolean estadoActivo) {
-        this.id_tipoResiduo = id_tipoResiduo;
-        this.nombre_tipoResiduo = nombre_tipoResiduo;
-        this.estadoActivo = estadoActivo;
-    }
-
-    public Tipo_residuo(String nombre_tipoResiduo, boolean estadoActivo) {
-        this.nombre_tipoResiduo = nombre_tipoResiduo;
-        this.estadoActivo = estadoActivo;
-    }
+    @OneToMany(targetEntity = Residuo.class, fetch = FetchType.LAZY,mappedBy = "tipoResiduo")
+    @JsonIgnore
+    private List<Residuo> listaResiduo;
 }
