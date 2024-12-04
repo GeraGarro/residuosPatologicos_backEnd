@@ -27,15 +27,13 @@ public class Hoja_ruta {
     @NotNull
     private LocalDate fechaFin;
 
-    // Otros atributos y métodos
-
     @AssertTrue(message = "La diferencia entre las fechas debe ser menor o igual a 7 días")
     public boolean isFechaDentroDeSemana() {
         return fechaInicio != null && fechaFin != null &&
                 fechaInicio.plusDays(7).compareTo(fechaFin) >= 0;
     }
 
-    @OneToMany(targetEntity = Ticket_control.class, fetch = FetchType.EAGER, mappedBy = "hojaRuta")
+    @OneToMany(targetEntity = Ticket_control.class, fetch = FetchType.LAZY, mappedBy = "hojaRuta")
     @JsonIgnore
     private List<Ticket_control> listaTickets;
 

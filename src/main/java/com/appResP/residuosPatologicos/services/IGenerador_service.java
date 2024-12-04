@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IGenerador_service {
-    Optional<Generador> findByID(Long Id);
+    Optional<Generador> findByID(Long id);
     List<Generador> findAll();
 
     void save(Generador generador);

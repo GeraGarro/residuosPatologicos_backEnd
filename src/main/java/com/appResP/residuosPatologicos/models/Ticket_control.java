@@ -22,8 +22,9 @@ public class Ticket_control {
     @JoinColumn(name = "id_transportista")
     private Transportista transportista;
 
-    @ManyToOne(targetEntity = Hoja_ruta.class, fetch = FetchType.EAGER)
-    private Long hojaRuta;
+    @ManyToOne(targetEntity = Hoja_ruta.class, fetch = FetchType.LAZY)
+    @JoinColumn( nullable = false)
+    private Hoja_ruta hojaRuta;
 
     @JoinColumn(name = "fecha_emision")
     private LocalDate fechaEmision;

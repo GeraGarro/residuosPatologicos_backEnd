@@ -2,7 +2,9 @@ package com.appResP.residuosPatologicos;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableScheduling
 @SpringBootApplication
 public class ResiduosPatologicosApplication {
 
@@ -14,6 +16,8 @@ public class ResiduosPatologicosApplication {
 		System.out.println("DB_PASSWORD: " + System.getenv("DB_PASSWORD"));
 
 		SpringApplication.run(ResiduosPatologicosApplication.class, args);
+
+
 	}
 
 }

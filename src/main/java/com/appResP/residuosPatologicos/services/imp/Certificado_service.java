@@ -2,12 +2,19 @@ package com.appResP.residuosPatologicos.services.imp;
 
 import com.appResP.residuosPatologicos.exceptions.UniqueConstraintViolationException;
 import com.appResP.residuosPatologicos.models.Certificado;
+import com.appResP.residuosPatologicos.models.Ticket_control;
+import com.appResP.residuosPatologicos.models.Transportista;
+import com.appResP.residuosPatologicos.models.enums.Meses;
 import com.appResP.residuosPatologicos.persistence.ICertificadoDAO;
+import com.appResP.residuosPatologicos.persistence.ITicketControlDAO;
+import com.appResP.residuosPatologicos.persistence.ITransportistaDAO;
 import com.appResP.residuosPatologicos.services.ICertificado_service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -18,6 +25,12 @@ public class Certificado_service implements ICertificado_service {
     ICertificadoDAO certificadoDAO;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    ITransportistaDAO transportistaDAO;
+
+    @Autowired
+    ITicketControlDAO ticketDao;
 
     @Override
     public Optional<Certificado> findByID(Long id) {
@@ -32,6 +45,44 @@ public class Certificado_service implements ICertificado_service {
     @Override
     public void save(Certificado certificado) {
         certificadoDAO.save(certificado);
+    }
+
+    @Scheduled( cron = "0 0 0 1 * ?") //cada dia de mes a medianoche
+    public  void crearCertificadoMensual() {
+        LocalDate hoy = LocalDate.now();
+        int anio = hoy.minusDays(1).getYear();
+        Meses mesAnterior = Meses.values()[hoy.minusDays(1).getMonthValue()];
+
+        int mesAnteriorId = hoy.minusMonths(1).getMonthValue();
+        //Obtengo la Lista de Transportsitas para crear un certificado a cada uno
+        List<Transportista> transportistas = transportistaDAO.findAll();
+        for (Transportista transportista : transportistas) {
+            Long transportistaId = transportista.getId_transportista();
+
+            //verificacion si el certificado ya existe
+            if (wouldViolateConstraint(anio, mesAnteriorId, transportistaId, null)) {
+                System.out.println("El certificado ya existe para el transportista " + transportistaId + " en el periodo: " + mesAnteriorId + "/" + anio);
+                continue; // Saltar a la siguiente iteración si ya existe
+            }
+
+            //crear Certificado
+
+            Certificado certificado = Certificado.builder()
+                    .mes(Meses.values()[mesAnteriorId - 1])
+                    .año(anio)
+                    .transportista(transportista)
+                    .build();
+
+            save(certificado);
+
+            List<Ticket_control> ticketsDelMesAnterior = ticketDao.findTicketsByPeriodo(anio, mesAnteriorId, transportistaId);
+
+            for (Ticket_control ticket : ticketsDelMesAnterior) {
+                ticket.setCertificado(certificado);
+                ticketDao.save(ticket);
+            }
+        }
+
     }
 
     @Override

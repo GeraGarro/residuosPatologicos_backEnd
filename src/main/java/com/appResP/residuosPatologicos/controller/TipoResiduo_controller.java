@@ -72,7 +72,7 @@ return ResponseEntity.notFound().build();
     return ResponseEntity.notFound().build();
     }
 //Actualizacion de un Elemento de Tipo Residuo
-  @PostMapping("/update/{id}")
+  @PutMapping("/update/{id}")
     public ResponseEntity<?> updateTipoResiduo(@PathVariable Long id, @RequestBody TipoResiduoDTO tipoResiduoDTO){
     Optional<Tipo_residuo> tipoResiduoOptional=tipoResiduoService.findByID(id);
 try {
@@ -83,7 +83,7 @@ try {
         tipoResiduo.setEstado(tipoResiduoDTO.isEstado());
 
         tipoResiduoService.save(tipoResiduo);
-        return  ResponseEntity.ok().body("El Tipo De residuo con el "+id+" ha sido Modificaod");
+        return  ResponseEntity.ok().body("El Tipo De residuo con el "+id+" ha sido Modificado");
     }else {
         return ResponseEntity.badRequest().body("El generador con ID " + id + " no existe");
     }

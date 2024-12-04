@@ -19,4 +19,8 @@ public interface ITicketControl_service {
     List<Ticket_control> findTicketsByPeriodo(int anio,int mes, Long id_transportista);
 
     String codificacionIdTicket(Long id);
+
+    List<Ticket_control> ListaTicketsbyHoja (Long id);
+
+    void actualizarEstado(Long id, boolean nuevoEstado);
 }

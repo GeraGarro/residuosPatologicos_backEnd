@@ -1,5 +1,6 @@
 package com.appResP.residuosPatologicos.services.imp;
 
+import com.appResP.residuosPatologicos.DTO.ResiduoDTO;
 import com.appResP.residuosPatologicos.models.Residuo;
 import com.appResP.residuosPatologicos.persistence.IResiduoDAO;
 import com.appResP.residuosPatologicos.services.IResiduo_service;
@@ -30,5 +31,13 @@ public class Residuo_service implements IResiduo_service {
     @Override
     public void deletebyID(Long id) {
         residuoDAO.deletebyID(id);
+    }
+
+    @Override
+    public void validateAndSave(ResiduoDTO dto) {
+        if(dto.getPeso()<0){
+            dto.setPeso(0);
+        }
+
     }
 }

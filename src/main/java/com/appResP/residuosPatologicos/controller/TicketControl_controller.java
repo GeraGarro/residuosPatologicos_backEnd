@@ -2,12 +2,10 @@ package com.appResP.residuosPatologicos.controller;
 
 import com.appResP.residuosPatologicos.DTO.*;
 import com.appResP.residuosPatologicos.models.Generador;
+import com.appResP.residuosPatologicos.models.Hoja_ruta;
 import com.appResP.residuosPatologicos.models.Ticket_control;
 import com.appResP.residuosPatologicos.models.Transportista;
-import com.appResP.residuosPatologicos.services.imp.Generador_service;
-import com.appResP.residuosPatologicos.services.imp.TicketControl_service;
-import com.appResP.residuosPatologicos.services.imp.TipoResiduo_Service;
-import com.appResP.residuosPatologicos.services.imp.Transportista_service;
+import com.appResP.residuosPatologicos.services.imp.*;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +33,7 @@ public class TicketControl_controller {
 @Autowired
     Transportista_service transportistaService;
 @Autowired
-    TipoResiduo_Service tipoResiduoService;
+    HojaRuta_service hojaRutaService;
 @GetMapping("UnTicket/{id}")
     public ResponseEntity<?> findTicketById(@PathVariable Long id){
 
@@ -120,6 +118,48 @@ public class TicketControl_controller {
                             .apellido(ticketControl.getTransportista().getApellido())
                             .cuit(ticketControl.getTransportista().getCuit())
                             .telefono(ticketControl.getTransportista().getTelefono())
+                            .domicilio(ticketControl.getTransportista().getDomicilio())
+                            .estado(ticketControl.getTransportista().isEstado()).build())
+                    .fechaEmisionTk(ticketControl.getFechaEmision())
+                    .estado(ticketControl.isEstado())
+                    .listaResiduos(ticketControl.getListaResiduos().stream().map(residuo -> ResiduoDTO.builder()
+                            .id(residuo.getId())
+                            .peso(residuo.getPeso())
+                            .tipoResiduo(TipoResiduoDTO.builder()
+                                    .id(residuo.getTipoResiduo().getId())
+                                    .nombre(residuo.getTipoResiduo().getNombre())
+                                    .estado(residuo.getTipoResiduo().isEstado())
+                                    .build())
+                            .id_TicketControl(residuo.getTicketControl().getId_Ticket())
+                            .build()).toList())
+                    .pesoTotal(ticketControlService.pesoResiduosByTicket(ticketControl.getId_Ticket()).setScale(2, RoundingMode.HALF_UP))
+                    .build())
+            .toList();
+
+
+    return ResponseEntity.ok(listaTickets);
+}
+
+@GetMapping("hoja-ruta/{id}")
+public  ResponseEntity<?> getTicketsForHoja (@PathVariable Long id){
+    List<Ticket_controlDTO> listaTickets= ticketControlService.ListaTicketsbyHoja(id).stream()
+            .map(ticketControl -> Ticket_controlDTO.builder()
+                    .id_Ticket(ticketControl.getId_Ticket())
+                    .codigo(ticketControlService.codificacionIdTicket(ticketControl.getId_Ticket()))
+                    .generador(GeneradorDTO.builder()
+                            .nombre(ticketControl.getGenerador().getNombre())
+                            .id(ticketControl.getGenerador().getId())
+                            .direccion(ticketControl.getGenerador().getDireccion())
+                            .cuit(ticketControl.getGenerador().getCuit())
+                            .estado(ticketControl.getGenerador().isEstado())
+                            .telefono(ticketControl.getGenerador().getTelefono())
+                            .build())
+                    .transportista(TransportistaDTO.builder()
+                            .id_transportista(ticketControl.getTransportista().getId_transportista())
+                            .nombre(ticketControl.getTransportista().getNombre())
+                            .apellido(ticketControl.getTransportista().getApellido())
+                            .cuit(ticketControl.getTransportista().getCuit())
+                            .telefono(ticketControl.getTransportista().getTelefono())
                             .domicilio(ticketControl.getTransportista().getTelefono())
                             .estado(ticketControl.getTransportista().isEstado()).build())
                     .fechaEmisionTk(ticketControl.getFechaEmision())
@@ -142,28 +182,33 @@ public class TicketControl_controller {
     return ResponseEntity.ok(listaTickets);
 }
 
-
 @PostMapping("crear")
     public ResponseEntity <?> saveTicket(@RequestBody @Validated Ticket_controlDTO ticketControlDTO)  throws Exception {
 
     Optional<Generador> generadorOptional=generadorService.findByID(ticketControlDTO.getGenerador().getId());
 
     Optional<Transportista> transportistaOptional=transportistaService.findByID(ticketControlDTO.getTransportista().getId_transportista());
+
+    Optional<Hoja_ruta> hojaRutaOpcional= hojaRutaService.findById(ticketControlDTO.getHojaRuta().getId());
     try {
+        if(hojaRutaOpcional.isPresent()){
+           Hoja_ruta hojaRuta= hojaRutaOpcional.get();
+            if(generadorOptional.isPresent() &&  transportistaOptional.isPresent()){
+                Generador generador=generadorOptional.get();
+                Transportista transportista=transportistaOptional.get();
 
-        if(generadorOptional.isPresent() &&  transportistaOptional.isPresent()){
-           Generador generador=generadorOptional.get();
-           Transportista transportista=transportistaOptional.get();
+                Ticket_control ticketControl=Ticket_control.builder()
+                        .generador(generador)
+                        .transportista(transportista)
+                        .fechaEmision(ticketControlDTO.getFechaEmisionTk())
+                        .hojaRuta(hojaRuta)
+                        .estado(ticketControlDTO.isEstado()).build();
 
-           Ticket_control ticketControl=Ticket_control.builder()
-                           .generador(generador)
-                           .transportista(transportista)
-                            .fechaEmision(ticketControlDTO.getFechaEmisionTk())
-                            .estado(ticketControlDTO.isEstado()).build();
+                ticketControlService.save(ticketControl);
 
-            ticketControlService.save(ticketControl);
-
+            }
         }
+
 
 
         URI location = URI.create("/api/TicketControl/crear"); // Construir la URL
@@ -178,15 +223,22 @@ return ResponseEntity.badRequest().body(Map.of("message", "no es posible registr
 
 @DeleteMapping("/eliminar/{id}")
     public ResponseEntity<?> deleteTicket(@PathVariable Long id){
+    Map<String, Object> response= new HashMap<>();
     if(id!=null){
         try {
             ticketControlService.deletebyID(id);
-            return ResponseEntity.ok("El Ticket con ID: "+id+ " ha sido Eliminado");
+            response.put("resultado","éxito");
+            response.put("mensaje","El Ticket con ID:" + id + " ha sido Eliminado" );
+            return ResponseEntity.ok(response);
         }catch (Exception e){
-            return ResponseEntity.badRequest().body("El Ticket con ID " + id + " no existe");
+            response.put("resultado", "error");
+            response.put("mensaje", "El Ticket con ID "+id+ " no existe");
+            return ResponseEntity.badRequest().body(response);
         }
     }
-    return ResponseEntity.notFound().build();
+    response.put("resultado","error");
+    response.put("mensaje","ID no proporcionado");
+    return ResponseEntity.status(404).body(response);
 }
     @PutMapping("/update/{id}")
 public ResponseEntity<?> updateTicket(@PathVariable Long id, @RequestBody Ticket_controlDTO ticketControlDTO){
@@ -226,6 +278,13 @@ public ResponseEntity<?> updateTicket(@PathVariable Long id, @RequestBody Ticket
         return ResponseEntity.badRequest().body("No ha sido posible realizar la modificación del Ticket "+id);
 
     }
+    }
+
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Void> actualizarEstadoTicket(@PathVariable Long id, @RequestBody Map<String, Boolean> request) {
+        boolean nuevoEstado = request.getOrDefault("estado", false);
+        ticketControlService.actualizarEstado(id, nuevoEstado);
+        return ResponseEntity.ok().build();
     }
 
    @GetMapping("/generadorPDF/{id}")

@@ -1,8 +1,8 @@
 package com.appResP.residuosPatologicos.services;
 
+import com.appResP.residuosPatologicos.DTO.ResiduoDTO;
 import com.appResP.residuosPatologicos.models.Residuo;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,5 +15,5 @@ public interface IResiduo_service
     void save(Residuo residuo);
     void deletebyID(Long id);
 
-
+void validateAndSave(ResiduoDTO dto);
 }

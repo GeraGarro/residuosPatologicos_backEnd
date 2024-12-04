@@ -31,27 +31,33 @@ public class Residuo_controller {
     TipoResiduo_Service tipoResiduoService;
 @GetMapping("/unResiduo/{id}")
   public ResponseEntity <?> findResiduoById (@PathVariable Long id){
-    Optional<Residuo> residuoOptional= residuoService.findByID(id);
-
-    if (residuoOptional.isPresent()){
-        Residuo residuo=residuoOptional.get();
-        ResiduoDTO residuoDTO=ResiduoDTO.builder()
-                .id(residuo.getId())
-                .tipoResiduo(TipoResiduoDTO.builder()
-                        .id(residuo.getTipoResiduo().getId())
-                        .nombre(residuo.getTipoResiduo().getNombre())
-                        .estado(residuo.getTipoResiduo().isEstado()).build())
-
-                .peso(residuo.getPeso())
-                .id_TicketControl(residuo.getTicketControl().getId_Ticket())
-                .build();
-
-        return ResponseEntity.ok(residuoDTO);
-    }else {
-        return ResponseEntity.notFound().build();
+    try{
+        Optional<Residuo> residuoOptional= residuoService.findByID(id);
+        if(residuoOptional.isPresent()){
+            ResiduoDTO residuoDTO= mapToDTO(residuoOptional.get());
+            return ResponseEntity.ok(residuoDTO);
+        }else{
+            return (ResponseEntity.status(404).body("Residuo no encontrado"));
+        }
+    }catch (Exception e){
+        return ResponseEntity.status(500).body("Error al procesar");
     }
 }
 
+private ResiduoDTO mapToDTO(Residuo residuo){
+    return ResiduoDTO.builder()
+            .id(residuo.getId())
+            .tipoResiduo(TipoResiduoDTO.builder()
+                    .id(residuo.getTipoResiduo().getId())
+                    .nombre(residuo.getTipoResiduo().getNombre())
+                    .estado(residuo.getTipoResiduo().isEstado())
+                    .codigo(residuo.getTipoResiduo().getCodigo())
+                    .build())
+            .peso(residuo.getPeso())
+            .id_TicketControl(residuo.getTicketControl().getId_Ticket())
+            .build();
+
+}
 @GetMapping("/verTodos")
     public ResponseEntity<?> findResiduoAll(){
     List <ResiduoDTO> listaResiduos=residuoService.findAll().stream()
@@ -75,6 +81,7 @@ try {
     Optional<Ticket_control> ticketControlOptional=ticketControlService.findByID(residuoDTO.getId_TicketControl());
 
     Optional<Tipo_residuo> tipoResiduoOptional= tipoResiduoService.findByID(residuoDTO.getTipoResiduo().getId());
+
     if(ticketControlOptional.isPresent()){
         Ticket_control ticketControl=ticketControlOptional.get();
         Tipo_residuo tipoResiduo=tipoResiduoOptional.get();
@@ -82,6 +89,7 @@ try {
         if(residuoDTO.getPeso()<0){
             residuoDTO.setPeso(0);
         }
+
         Residuo residuo=Residuo.builder()
                 .tipoResiduo(tipoResiduo)
                 .peso(residuoDTO.getPeso())

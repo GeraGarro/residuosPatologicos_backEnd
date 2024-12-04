@@ -14,4 +14,8 @@ public interface ITicketControlDAO {
     void deletebyID(Long id);
 
    List<Ticket_control> findTicketsByPeriodo(int anio,int mes, Long id_transportista);
+
+   List <Ticket_control> getTicketsByHojaRutaId(Long hojaRutaId);
+
+    void actualizarEstado(Long id, boolean nuevoEstado);
 }

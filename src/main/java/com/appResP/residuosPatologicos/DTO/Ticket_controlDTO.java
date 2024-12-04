@@ -27,6 +27,8 @@ public class Ticket_controlDTO {
 
     private GeneradorDTO generador;
 
+    private Hoja_RutaDTO hojaRuta;
+
     private BigDecimal pesoTotal;
 
     List<ResiduoDTO> listaResiduos;
