@@ -2,6 +2,7 @@ package com.appResP.residuosPatologicos.DTO;
 
 
 import lombok.AllArgsConstructor;
+
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-
 public class TipoResiduoDTO {
 
     private Long id;

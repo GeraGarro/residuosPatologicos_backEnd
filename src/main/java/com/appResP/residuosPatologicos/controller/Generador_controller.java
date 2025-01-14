@@ -133,6 +133,37 @@ try {
     return ResponseEntity.badRequest().body("No ha sido posible realizar la modificación");
 }
 }
+
+    @PatchMapping("/cambioEstado/{id}")
+    public ResponseEntity<?> cambiarEstadoGenerador(@PathVariable Long id, @RequestParam boolean nuevoEstado) {
+        try {
+            Optional<Generador> generadorOptional = generadorService.findByID(id);
+
+            if (generadorOptional.isPresent()) {
+                Generador generador = generadorOptional.get();
+
+                // Cambiar el estado del generador
+                generador.setEstado(nuevoEstado);
+
+                // Guardar los cambios en la base de datos
+                generadorService.save(generador);
+
+                // Construir la respuesta
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "Estado actualizado correctamente");
+                response.put("id", generador.getId());
+                response.put("nuevoEstado", generador.isEstado());
+
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "El generador con ID " + id + " no existe"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error al intentar cambiar el estado del generador"));
+        }
+    }
 }
 
 
