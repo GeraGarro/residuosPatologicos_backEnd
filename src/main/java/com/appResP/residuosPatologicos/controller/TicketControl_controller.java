@@ -9,10 +9,13 @@ import com.appResP.residuosPatologicos.services.imp.*;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -287,7 +290,7 @@ public ResponseEntity<?> updateTicket(@PathVariable Long id, @RequestBody Ticket
         return ResponseEntity.ok().build();
     }
 
-   @GetMapping("/generadorPDF/{id}")
+   @GetMapping("/generadorPDFenEscritorio/{id}")
     ResponseEntity<?> generatePdfTicket(@PathVariable Long id) throws JRException {
 try {
     Optional<Ticket_control> ticketControlOptional=ticketControlService.findByID(id);
@@ -367,82 +370,72 @@ return ResponseEntity.notFound().build();
     }
 
 
-   /* @GetMapping("/generadorPDF/{id}")
-    ResponseEntity<?> generatePdfTicket(@PathVariable Long id, HttpServletResponse response) throws JRException {
-        try {
-            Optional<Ticket_control> ticketControlOptional=ticketControlService.findByID(id);
-            File tempFile = File.createTempFile("ticket-", ".pdf");
-            String destinatarioPatch = tempFile.getAbsolutePath();
-            if(ticketControlOptional.isPresent()){
-                String filePatch="src"+ File.separator+"main"+File.separator+"resources"+File.separator+"templates"+File.separator+ "ticketResiduo.jrxml";
 
-                Ticket_control ticketControl=ticketControlOptional.get();
+    @GetMapping("/generadorPDFNav/{id}")
+    public ResponseEntity<?> generatePdfTicketNav(@PathVariable Long id){
+    try{
+        Optional <Ticket_control> ticketControlOptional= ticketControlService.findByID(id);
+        if(ticketControlOptional.isPresent()){
+            String filePatch="src"+ File.separator+"main"+File.separator+"resources"+File.separator+"templates"+File.separator+ "ticketResiduo.jrxml";
+            Ticket_control ticketControl= ticketControlOptional.get();
 
+            if(ticketControl.isEstado()){
+               Map<String,Object> parameters= new HashMap<>();
+               parameters.put("id-Ticket",ticketControlService.codificacionIdTicket(id));
+               parameters.put("Transportista.nombre", ticketControl.getTransportista().getNombre() + " " + ticketControl.getTransportista().getApellido());
+               parameters.put("transportista.cuit", ticketControl.getTransportista().getCuit());
+               parameters.put("transportista.domicilio", ticketControl.getTransportista().getDomicilio());
+               parameters.put("transportista.telefono", ticketControl.getTransportista().getTelefono());
+               parameters.put("generador.nombre", ticketControl.getGenerador().getNombre());
+               parameters.put("generador.cuit", ticketControl.getGenerador().getCuit());
+               parameters.put("generador.domicilio", ticketControl.getGenerador().getDireccion());
+               parameters.put("imgDir", "classpath/templates/");
 
-                if(ticketControl.isEstado()){
-                    Map<String,Object> parameters=new HashMap<>();
+               Date fechaEmisionDate= java.sql.Date.valueOf(ticketControl.getFechaEmision());
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                String fechaFormateada = dateFormat.format(fechaEmisionDate);
+                parameters.put("ticket.fechaEmision", fechaFormateada);
 
+                List<residuosReportDTO> listaResiduos = ticketControl.getListaResiduos().stream().map(
+                                residuo -> residuosReportDTO.builder()
+                                        .id(residuo.getTipoResiduo().getCodigo())
+                                        .tipoDeResiduo(residuo.getTipoResiduo().getNombre())
+                                        .peso(residuo.getPeso())
+                                        .build())
+                        .sorted(Comparator.comparing(residuosReportDTO::getTipoDeResiduo, String.CASE_INSENSITIVE_ORDER))
+                        .toList();
 
-                    parameters.put("id-Ticket",ticketControlService.codificacionIdTicket(id));
-                    parameters.put("Transportista.nombre",ticketControl.getTransportista().getNombre()+" "+ticketControl.getTransportista().getApellido());
-                    parameters.put("transportista.cuit",ticketControl.getTransportista().getCuit());
-                    parameters.put("transportista.domicilio",ticketControl.getTransportista().getDomicilio());
-                    parameters.put("transportista.telefono",ticketControl.getTransportista().getTelefono());
-                    parameters.put("generador.nombre",ticketControl.getGenerador().getNombre());
-                    parameters.put("generador.cuit",ticketControl.getGenerador().getCuit());
-                    parameters.put("generador.domicilio",ticketControl.getGenerador().getDireccion());
-                    parameters.put("imgDir","classpath/templates/");
+                JRBeanCollectionDataSource residuosDataSource = new JRBeanCollectionDataSource(listaResiduos);
+                parameters.put("residuosDateSet", residuosDataSource);
 
-                    Date fechaEmisionDate = java.sql.Date.valueOf(ticketControl.getFechaEmision());
+                String nombreTransportista = ticketControl.getTransportista().getNombre() + " " + ticketControl.getTransportista().getApellido();
+                parameters.put("pesoTotal", ticketControlService.pesoResiduosByTicket(id).setScale(2, RoundingMode.HALF_UP));
+                parameters.put("firma_transportista", nombreTransportista);
+                JasperReport report = JasperCompileManager.compileReport(filePatch);
+                JasperPrint print = JasperFillManager.fillReport(report, parameters, new JREmptyDataSource());
 
-// Creamos un objeto SimpleDateFormat con el formato deseado
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                // Exportar el PDF a un arreglo de bytes
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                JasperExportManager.exportReportToPdfStream(print, outputStream);
+                byte[] pdfBytes = outputStream.toByteArray();
 
-// Formateamos la fecha utilizando el formato y lo almacenamos en una cadena de texto
-                    String fechaFormateada = dateFormat.format(fechaEmisionDate);
+                // Configurar las cabeceras para la descarga del archivo
+                HttpHeaders headers = new HttpHeaders();
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Manifiesto-" + ticketControl.getId_Ticket() + ".pdf");
+                headers.add(HttpHeaders.CONTENT_TYPE, "application/pdf");
 
-                    parameters.put("ticket.fechaEmision",fechaFormateada);
-
-
-                    List <residuosReportDTO> listaResiduos=ticketControl.getListaResiduos().stream().map(
-                                    residuo -> residuosReportDTO.builder()
-                                            .id(residuo.getTipoResiduo().getCodigo())
-                                            .tipoDeResiduo(residuo.getTipoResiduo().getNombre())
-                                            .peso(residuo.getPeso())
-                                            .build())
-                            .sorted(Comparator.comparing(residuosReportDTO::getTipoDeResiduo, String.CASE_INSENSITIVE_ORDER))
-                            .toList();
-
-
-                    JRBeanCollectionDataSource residuosDataSource=new JRBeanCollectionDataSource(listaResiduos);
-
-                    //JRBeanCollectionDataSource residuosDataSource=new JRBeanCollectionDataSource(ticketControl.getListaResiduos());
-                    parameters.put("residuosDateSet",residuosDataSource);
-
-                    String nombreTransportista=ticketControl.getTransportista().getNombre()+" "+ticketControl.getTransportista().getApellido();
-                    parameters.put("pesoTotal",ticketControlService.pesoResiduosByTicket(id).setScale(2, RoundingMode.HALF_UP));
-                    parameters.put("firma_transportista",nombreTransportista);
-
-                    JasperReport report= JasperCompileManager.compileReport(filePatch);
-                    JasperPrint print= JasperFillManager.fillReport(report,parameters,new JREmptyDataSource());
-
-                    response.setContentType("application/pdf");
-                    try (OutputStream out = response.getOutputStream()) {
-                        JasperExportManager.exportReportToPdfStream(print, out);
-                    }
-
-                    return ResponseEntity.ok().build();
-                }else{
-                    return ResponseEntity.badRequest().body("No es Posible generar el PDF del manifiesto mientras no este Concluido el reporte del Mismo");
-                }
+                return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            } else {
+                return ResponseEntity.badRequest().body("No es posible generar el PDF del manifiesto mientras no esté concluido el reporte del mismo.");
             }
-        }catch (Exception e){
-            return ResponseEntity.internalServerError().body(e.getMessage());
         }
-
-
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.internalServerError().body(e.getMessage());
+    }
         return ResponseEntity.notFound().build();
+    }
 
-    }*/
+
     }
 

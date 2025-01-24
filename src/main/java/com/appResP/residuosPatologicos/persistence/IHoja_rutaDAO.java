@@ -10,6 +10,6 @@ public interface IHoja_rutaDAO {
     public void crearHojaRutaSemanal();
     public Hoja_ruta obtenerHojaRutaPorFecha(LocalDate fechaEmision);
     public Optional<Hoja_ruta> findHojaRutaForCurrentDate();
-
+    void verificarYCrearHojaRutaSiEsNecesario();
     Optional<Hoja_ruta> findById(Long Id);
 }

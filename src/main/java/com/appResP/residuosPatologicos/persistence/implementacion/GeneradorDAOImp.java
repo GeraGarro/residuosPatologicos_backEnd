@@ -31,4 +31,14 @@ public class GeneradorDAOImp implements IGeneradorDAO {
     public void deletebyID(Long id) {
         generador_repositorio.deleteById(id);
     }
+
+    @Override
+    public List<Generador> obtenerGeneradoresActivos() {
+        return generador_repositorio.findByEstadoTrue();
+    }
+
+    @Override
+    public List<Generador> obtenerGeneradoresInactivos() {
+        return generador_repositorio.findByEstadoFalse();
+    }
 }

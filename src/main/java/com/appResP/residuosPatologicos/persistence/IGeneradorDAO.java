@@ -11,4 +11,7 @@ public interface IGeneradorDAO {
 
     void save(Generador generador);
     void deletebyID(Long id);
+
+    List<Generador>  obtenerGeneradoresActivos();
+    List<Generador>  obtenerGeneradoresInactivos();
 }

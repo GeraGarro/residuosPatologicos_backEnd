@@ -33,4 +33,14 @@ public class Generador_service implements IGenerador_service {
     public void deletebyID(Long id) {
     generadorDAO.deletebyID(id);
     }
+
+    @Override
+    public List<Generador> obtenerGeneradoresActivos() {
+        return generadorDAO.obtenerGeneradoresActivos();
+    }
+
+    @Override
+    public List<Generador> obtenerGeneradoresInactivos() {
+        return generadorDAO.obtenerGeneradoresInactivos();
+    }
 }

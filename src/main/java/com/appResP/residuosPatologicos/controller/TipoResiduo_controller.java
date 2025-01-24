@@ -3,17 +3,18 @@ import com.appResP.residuosPatologicos.DTO.TipoResiduoDTO;
 import com.appResP.residuosPatologicos.models.Tipo_residuo;
 import com.appResP.residuosPatologicos.services.imp.TipoResiduo_Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/tipoResiduo")
+
 public class TipoResiduo_controller {
 
     @Autowired
@@ -92,4 +93,35 @@ try {
 }
   }
 
+  @PatchMapping("/cambioEstado/{id}")
+    public ResponseEntity <?> cambioEstadoTipo(@PathVariable Long id, @RequestParam boolean nuevoEstado){
+    try {
+        Optional<Tipo_residuo> tipoOptional= tipoResiduoService.findByID(id);
+
+        if(tipoOptional.isPresent()){
+            Tipo_residuo tipoResiduo=tipoOptional.get();
+
+            //cambiar estado tipo de residuo
+            tipoResiduo.setEstado(nuevoEstado);
+
+            //Guardar los cambios
+            tipoResiduoService.save(tipoResiduo);
+
+            //Construir la respuesta
+            Map<String, Object> response=new HashMap<>();
+            response.put("message","Estado actualizado correctamente");
+            response.put("id",tipoResiduo.getId());
+            response.put("nuevoEstado", tipoResiduo.isEstado());
+
+            return  ResponseEntity.ok(response);
+        }else{
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message","El tipo residuo con ID "+id+" no existe"));
+        }
+
+    }catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "Error al intentar cambiar el estado del generador"));
+  }
+}
 }

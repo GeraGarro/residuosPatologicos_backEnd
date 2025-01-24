@@ -125,7 +125,10 @@ try {
             generadorEdit.setEstado(generadorDTO.isEstado());
             generadorService.save(generadorEdit);
 
-            return ResponseEntity.ok("Generador con id: " + id + " ha sido modificado");
+            URI location = URI.create("/api/generador/update/" + id);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Generador Modificado");
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.badRequest().body("El generador con ID " + id + " no existe");
         }
@@ -163,6 +166,36 @@ try {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Error al intentar cambiar el estado del generador"));
         }
+    }
+
+    @GetMapping("/activos")
+    public ResponseEntity<?> findGeneradoresActivos() {
+        List <GeneradorDTO> listaGeneradoresActivos= generadorService.obtenerGeneradoresActivos().stream()
+                .map(generador -> GeneradorDTO.builder()
+                        .id(generador.getId())
+                        .nombre(generador.getNombre())
+                        .direccion(generador.getDireccion())
+                        .cuit(generador.getCuit())
+                        .telefono(generador.getTelefono())
+                        .legajo(generador.getLegajo())
+                        .build()).toList();
+        return ResponseEntity.ok(listaGeneradoresActivos);
+
+    }
+
+    @GetMapping("/inactivos")
+    public ResponseEntity<?> findGeneradoresInactivos() {
+        List <GeneradorDTO> listaGeneradoresInactivos= generadorService.obtenerGeneradoresInactivos().stream()
+                .map(generador -> GeneradorDTO.builder()
+                        .id(generador.getId())
+                        .nombre(generador.getNombre())
+                        .direccion(generador.getDireccion())
+                        .cuit(generador.getCuit())
+                        .telefono(generador.getTelefono())
+                        .legajo(generador.getLegajo())
+                        .build()).toList();
+        return ResponseEntity.ok(listaGeneradoresInactivos);
+
     }
 }
 
