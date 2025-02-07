@@ -1,11 +1,8 @@
 package com.appResP.residuosPatologicos.services.imp;
 
-import com.appResP.residuosPatologicos.models.Tipo_residuo;
 import com.appResP.residuosPatologicos.models.Transportista;
 import com.appResP.residuosPatologicos.persistence.ITransportistaDAO;
-import com.appResP.residuosPatologicos.repositories.ITransportista_Repository;
 import com.appResP.residuosPatologicos.services.ITransporista_service;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -1,10 +1,13 @@
-package com.appResP.residuosPatologicos.repositories;
+package com.appResP.residuosPatologicos.persistence.repositories;
 
 import com.appResP.residuosPatologicos.models.Hoja_ruta;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -21,4 +24,13 @@ public interface IHoja_ruta_Repository extends JpaRepository <Hoja_ruta,Long>{
 
     Optional<Hoja_ruta> findByFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(LocalDate fechaInicio, LocalDate fechaFin);
 
+
+    @Query(value = """
+    SELECT DISTINCT hr
+    FROM Hoja_ruta hr
+    JOIN Ticket_control tc ON hr.id = tc.hojaRuta.id
+    JOIN Certificado c ON c.id = tc.certificado.id
+    WHERE c.id = :certificadoId
+""")
+    List<Hoja_ruta> findHojasRutaByCertificado(@Param("certificadoId") Long certificadoId);
 }

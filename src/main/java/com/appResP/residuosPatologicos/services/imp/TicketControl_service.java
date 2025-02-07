@@ -85,6 +85,11 @@ public class TicketControl_service implements ITicketControl_service {
     }
 
     @Override
+    public List<Ticket_control> ListaTicketsbyCertificado(long id) {
+        return ticketControlDAO.getTicketsByCertificado(id);
+    }
+
+    @Override
     public void actualizarEstado(Long id, boolean nuevoEstado) {
         ticketControlDAO.actualizarEstado(id, nuevoEstado);
     }

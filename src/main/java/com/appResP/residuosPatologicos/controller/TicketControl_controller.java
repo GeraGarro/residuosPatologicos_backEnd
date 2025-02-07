@@ -125,7 +125,8 @@ public class TicketControl_controller {
                             .estado(ticketControl.getTransportista().isEstado()).build())
                     .fechaEmisionTk(ticketControl.getFechaEmision())
                     .estado(ticketControl.isEstado())
-                    .listaResiduos(ticketControl.getListaResiduos().stream().map(residuo -> ResiduoDTO.builder()
+                    .listaResiduos
+                            (ticketControl.getListaResiduos().stream().map(residuo -> ResiduoDTO.builder()
                             .id(residuo.getId())
                             .peso(residuo.getPeso())
                             .tipoResiduo(TipoResiduoDTO.builder()

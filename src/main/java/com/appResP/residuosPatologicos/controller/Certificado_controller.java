@@ -10,6 +10,7 @@ import com.appResP.residuosPatologicos.models.Transportista;
 import com.appResP.residuosPatologicos.models.enums.Meses;
 import com.appResP.residuosPatologicos.services.imp.Certificado_service;
 import com.appResP.residuosPatologicos.services.imp.Generador_service;
+
 import com.appResP.residuosPatologicos.services.imp.TicketControl_service;
 import com.appResP.residuosPatologicos.services.imp.Transportista_service;
 import jakarta.persistence.EntityNotFoundException;
@@ -17,10 +18,13 @@ import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -128,54 +132,6 @@ public class Certificado_controller {
         }
 return ResponseEntity.badRequest().body("No se Encontraron Certificados Para el Transportista ");
     }
-    /*PostMapping("/crear")
-    public ResponseEntity<?> saveCertificado(@RequestBody CertificadoDTO certificadoDTO) {
-        Optional<Transportista> transportistaOptional = transportistaService.findByID(certificadoDTO.getTransportista().getId_transportista());
-        Transportista transportista = new Transportista();
-
-        try {
-            if (transportistaOptional.isPresent()) {
-                transportista = transportistaOptional.get();
-            } else {
-                throw new NullPointerException("Transportista no encontrado");
-
-            }
-            if (certificadoDTO.getAnio() < 2010 || certificadoDTO.getAnio() > 2100) {
-                throw new IllegalArgumentException("Año no válidos");
-
-            }
-            if (certificadoDTO.getMes() == null) {
-                throw new NullPointerException("Mes no puede ser nulo");
-            }
-
-
-            Certificado certificado = Certificado.builder()
-                    .mes(certificadoDTO.getMes())
-                    .año(certificadoDTO.getAnio())
-                    .transportista(transportista)
-                    .build();
-            certificadoService.save(certificado);
-
-            List<Ticket_control> listaTicketsPeriodo = ticketControlService.findTicketsByPeriodo(certificadoDTO.getAnio(), certificadoDTO.getMes().getId(), transportista.getId_transportista());
-            for (Ticket_control ticket : listaTicketsPeriodo) {
-
-                ticket.setCertificado(certificado);
-                ticketControlService.save(ticket);
-            }
-
-
-            URI location = URI.create("/api/Certificado/crear");
-
-            return ResponseEntity.created(location).body("Certificado creado");
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (NullPointerException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-
-
-    }*/
 
     @PostMapping("/crear")
     public ResponseEntity<?> saveCertificado(@RequestBody CertificadoDTO certificadoDTO) {
@@ -241,11 +197,6 @@ return ResponseEntity.badRequest().body("No se Encontraron Certificados Para el 
 
 
     }
-
-
-
-
-
 
 
         @DeleteMapping("/eliminar/{id}")
@@ -338,61 +289,69 @@ return ResponseEntity.badRequest().body("No se Encontraron Certificados Para el 
 
 
     @GetMapping("/generadorPDF/{id}")
-    ResponseEntity<?> generatePdfCertificado(@PathVariable Long id) throws JRException {
+    public ResponseEntity<?> generatePdfCertificado(@PathVariable Long id) {
         try {
-            Optional<Certificado> certificadoOptional=certificadoService.findByID(id);
-            String desktopPath = System.getProperty("user.home") + File.separator + "Desktop" + File.separator;
-            String destinatarioPatch;
-            if(certificadoOptional.isPresent()){
-                String filePatch="src"+ File.separator+"main"+File.separator+"resources"+File.separator+"templates"+File.separator+ "certificadoReport.jrxml";
+            Optional<Certificado> certificadoOptional = certificadoService.findByID(id);
 
-                Certificado certificado=certificadoOptional.get();
+            if (certificadoOptional.isPresent()) {
+                String filePatch = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "templates" + File.separator + "certificadoReport.jrxml";
 
-                Map<String,Object> parameters=new HashMap<>();
+                Certificado certificado = certificadoOptional.get();
 
-                String nombreCompletoTransportista=certificado.getTransportista().getNombre()+" "+certificado.getTransportista().getApellido();
+                Map<String, Object> parameters = new HashMap<>();
 
-                String periodo=certificado.getMes()+"/"+certificado.getAño();
+                String nombreCompletoTransportista = certificado.getTransportista().getNombre() + " " + certificado.getTransportista().getApellido();
 
-                parameters.put("transportista_nombre",nombreCompletoTransportista);
-                parameters.put("transportista_cuit",certificado.getTransportista().getCuit());
-                parameters.put("transportista_direccion",certificado.getTransportista().getDomicilio());
-                parameters.put("certificado_id",certificado.getId());
-                parameters.put("certificado_periodo",periodo);
-                parameters.put("firma_transportista",nombreCompletoTransportista);
+                String periodo = certificado.getMes() + "/" + certificado.getAño();
+
+                parameters.put("transportista_nombre", nombreCompletoTransportista);
+                parameters.put("transportista_cuit", certificado.getTransportista().getCuit());
+                parameters.put("transportista_direccion", certificado.getTransportista().getDomicilio());
+                parameters.put("certificado_id", certificado.getId());
+                parameters.put("certificado_periodo", periodo);
+                parameters.put("firma_transportista", nombreCompletoTransportista);
 
 
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
-                List<TicketsReport> listaTicketsReporte=certificado.getListaTickets().stream().map(
+                List<TicketsReport> listaTicketsReporte = certificado.getListaTickets().stream().map(
                         ticketControl -> TicketsReport.builder()
                                 .id_ticket(ticketControlService.codificacionIdTicket(ticketControl.getId_Ticket()))
                                 .generador_nombre(ticketControl.getGenerador().getNombre())
                                 .peso(ticketControlService.pesoResiduosByTicket(ticketControl.getId_Ticket()).setScale(2, RoundingMode.HALF_UP))
                                 .fechaEmision(dateFormat.format(java.sql.Date.valueOf(ticketControl.getFechaEmision()))
-                                        ).build()).toList();
+                                ).build()).toList();
 
 
-
-                JRBeanCollectionDataSource residuosDataSource=new JRBeanCollectionDataSource(listaTicketsReporte);
+                JRBeanCollectionDataSource residuosDataSource = new JRBeanCollectionDataSource(listaTicketsReporte);
 
                 //JRBeanCollectionDataSource residuosDataSource=new JRBeanCollectionDataSource(ticketControl.getListaResiduos());
-                parameters.put("ticketDateSet",residuosDataSource);
+                parameters.put("ticketDateSet", residuosDataSource);
 
-                destinatarioPatch=desktopPath +"cert-"+certificado.getId()+certificado.getTransportista().getNombre()+".pdf";
-                JasperReport report= JasperCompileManager.compileReport(filePatch);
-                JasperPrint print= JasperFillManager.fillReport(report,parameters,new JREmptyDataSource());
-                JasperExportManager.exportReportToPdfFile(print,destinatarioPatch);
-                return ResponseEntity.ok("El pdf ha sido creado");
+                JasperReport report = JasperCompileManager.compileReport(filePatch);
+                JasperPrint print = JasperFillManager.fillReport(report, parameters, new JREmptyDataSource());
+
+                // Exportar el PDF a un arreglo de bytes
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                JasperExportManager.exportReportToPdfStream(print, outputStream);
+                byte[] pdfBytes = outputStream.toByteArray();
+
+                // Configurar las cabeceras para la descarga del archivo
+                HttpHeaders headers = new HttpHeaders();
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Manifiesto-" + certificado.getId() + ".pdf");
+                headers.add(HttpHeaders.CONTENT_TYPE, "application/pdf");
+
+                return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
 
             }
-        }catch (Exception e){
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
 
-
-        return ResponseEntity.notFound().build();
-
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.internalServerError().body(e.getMessage());
     }
+        return ResponseEntity.notFound().build();
+}
+
+
     }
 

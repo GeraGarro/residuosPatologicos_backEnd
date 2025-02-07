@@ -2,7 +2,7 @@ package com.appResP.residuosPatologicos.persistence.implementacion;
 
 import com.appResP.residuosPatologicos.models.Ticket_control;
 import com.appResP.residuosPatologicos.persistence.ITicketControlDAO;
-import com.appResP.residuosPatologicos.repositories.ITicket_Repository;
+import com.appResP.residuosPatologicos.persistence.repositories.ITicket_Repository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -41,6 +41,11 @@ public class TicketControlDAOImp implements ITicketControlDAO {
     @Override
     public List<Ticket_control> getTicketsByHojaRutaId(Long hojaRutaId) {
         return ticket_Repositorio.findByHojaRutaId(hojaRutaId);
+    }
+
+    @Override
+    public List<Ticket_control> getTicketsByCertificado(Long certificadoId) {
+        return ticket_Repositorio.findByCertificadoId(certificadoId);
     }
 
     @Override

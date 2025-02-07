@@ -23,4 +23,17 @@ public enum Meses {
     public int getId() {
         return id;
     }
+
+    public String getNombre() {
+        return this.name();
+    }
+
+    public static Meses fromId(int id) {
+        for (Meses mes : values()) {
+            if (mes.getId() == id) {
+                return mes;
+            }
+        }
+        throw new IllegalArgumentException("Invalid Meses id: " + id);
+    }
 }

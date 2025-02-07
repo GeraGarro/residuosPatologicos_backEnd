@@ -16,4 +16,8 @@ public interface ICertificado_service {
     public void update(Certificado certificado);
 
     List<Certificado> findListByTransportista(Long idTransportista);
+
+    public void crearCertificadoMensual();
+
+
 }

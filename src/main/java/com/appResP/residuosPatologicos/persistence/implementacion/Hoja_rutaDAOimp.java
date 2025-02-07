@@ -2,7 +2,7 @@ package com.appResP.residuosPatologicos.persistence.implementacion;
 
 import com.appResP.residuosPatologicos.models.Hoja_ruta;
 import com.appResP.residuosPatologicos.persistence.IHoja_rutaDAO;
-import com.appResP.residuosPatologicos.repositories.IHoja_ruta_Repository;
+import com.appResP.residuosPatologicos.persistence.repositories.IHoja_ruta_Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

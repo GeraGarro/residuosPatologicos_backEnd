@@ -22,5 +22,9 @@ public interface ITicketControl_service {
 
     List<Ticket_control> ListaTicketsbyHoja (Long id);
 
+    List <Ticket_control> ListaTicketsbyCertificado (long id);
+
     void actualizarEstado(Long id, boolean nuevoEstado);
+
+
 }

@@ -2,7 +2,7 @@ package com.appResP.residuosPatologicos.persistence.implementacion;
 
 import com.appResP.residuosPatologicos.models.Generador;
 import com.appResP.residuosPatologicos.persistence.IGeneradorDAO;
-import com.appResP.residuosPatologicos.repositories.IGenerador_Repository;
+import com.appResP.residuosPatologicos.persistence.repositories.IGenerador_Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

@@ -2,7 +2,7 @@ package com.appResP.residuosPatologicos.persistence.implementacion;
 
 import com.appResP.residuosPatologicos.models.Residuo;
 import com.appResP.residuosPatologicos.persistence.IResiduoDAO;
-import com.appResP.residuosPatologicos.repositories.IResiduo_Repository;
+import com.appResP.residuosPatologicos.persistence.repositories.IResiduo_Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

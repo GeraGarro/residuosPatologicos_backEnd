@@ -17,5 +17,6 @@ public interface ITicketControlDAO {
 
    List <Ticket_control> getTicketsByHojaRutaId(Long hojaRutaId);
 
+   List <Ticket_control> getTicketsByCertificado(Long certificadoId);
     void actualizarEstado(Long id, boolean nuevoEstado);
 }

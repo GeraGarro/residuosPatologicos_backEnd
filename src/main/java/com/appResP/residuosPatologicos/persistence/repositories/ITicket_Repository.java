@@ -1,4 +1,4 @@
-package com.appResP.residuosPatologicos.repositories;
+package com.appResP.residuosPatologicos.persistence.repositories;
 
 
 import com.appResP.residuosPatologicos.models.Hoja_ruta;
@@ -20,6 +20,8 @@ public interface ITicket_Repository extends CrudRepository<Ticket_control,Long> 
 
     @Query ("SELECT t FROM Ticket_control t WHERE t.hojaRuta.id = :hojaRutaId")
     List <Ticket_control> findByHojaRutaId(@Param( "hojaRutaId" )Long hojaRutaId);
+
+    List <Ticket_control> findByCertificadoId(Long certificadoId);
 }
 
 

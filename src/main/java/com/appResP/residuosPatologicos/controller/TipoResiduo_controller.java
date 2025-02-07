@@ -52,16 +52,31 @@ return ResponseEntity.notFound().build();
     //Creación de un Nuevo Tipo de Residuo
     @PostMapping("/crear")
     public ResponseEntity <?> saveTipoResiduo(@RequestBody TipoResiduoDTO tipoResiduoDTO) throws URISyntaxException {
-    if(!tipoResiduoDTO.getNombre().isBlank()){
-        tipoResiduoService.save(Tipo_residuo.builder()
+
+    try{
+        if(tipoResiduoDTO.getNombre().isBlank()){
+
+            return ResponseEntity.badRequest().body((Map.of("message","Faltan Datos Por Ingresar")));
+
+
+        }
+        Tipo_residuo tipoResiduo= Tipo_residuo.builder()
                 .nombre(tipoResiduoDTO.getNombre())
                 .codigo(tipoResiduoDTO.getCodigo())
                 .estado(tipoResiduoDTO.isEstado())
-                .build());
-        return ResponseEntity.created(new URI("/api/tipoResiduo/crear")).body("El Tipo de Residuo Ha sido Creado");
+                .build();
+
+        tipoResiduoService.save(tipoResiduo);
+        URI location= URI.create("/api/tipoResiduo/crear");
+        Map<String,String> response= new HashMap<>();
+        response.put("message", " Nueva Clasificación de Residuo Incorporado");
+        return  ResponseEntity.created(location).body(response);
+    }catch (Exception e){
+        return  ResponseEntity.badRequest().body(Map.of("message","Error, no es posible Realizar la incorporacion:"+e));
     }
-    return ResponseEntity.badRequest().build();
+
     }
+
 
     //Eliminacion de Un Tipo de Residuo
     @DeleteMapping("/eliminar/{id}")
@@ -78,18 +93,24 @@ return ResponseEntity.notFound().build();
     Optional<Tipo_residuo> tipoResiduoOptional=tipoResiduoService.findByID(id);
 try {
     if(tipoResiduoOptional.isPresent()){
-        Tipo_residuo tipoResiduo=tipoResiduoOptional.get();
-        tipoResiduo.setNombre(tipoResiduoDTO.getNombre());
-        tipoResiduo.setCodigo(tipoResiduoDTO.getCodigo());
-        tipoResiduo.setEstado(tipoResiduoDTO.isEstado());
+        Tipo_residuo tipoResiduoEdit=tipoResiduoOptional.get();
 
-        tipoResiduoService.save(tipoResiduo);
-        return  ResponseEntity.ok().body("El Tipo De residuo con el "+id+" ha sido Modificado");
-    }else {
+        tipoResiduoEdit.setNombre(tipoResiduoDTO.getNombre());
+        tipoResiduoEdit.setCodigo(tipoResiduoDTO.getCodigo());
+        tipoResiduoEdit.setEstado(tipoResiduoDTO.isEstado());
+
+        tipoResiduoService.save(tipoResiduoEdit);
+
+        URI location= URI.create("/api/tipoResiduo/update/"+id);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Generador Modificado");
+        return ResponseEntity.ok(response);
+    } else {
         return ResponseEntity.badRequest().body("El generador con ID " + id + " no existe");
     }
 }catch (Exception e) {
-    return ResponseEntity.badRequest().body("No ha sido posible realizar la modificación");
+    return ResponseEntity.badRequest().body("No ha sido posible realizar la modificación "+e);
 }
   }
 

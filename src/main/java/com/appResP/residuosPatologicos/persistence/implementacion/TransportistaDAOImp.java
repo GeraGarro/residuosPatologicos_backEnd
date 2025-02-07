@@ -2,7 +2,7 @@ package com.appResP.residuosPatologicos.persistence.implementacion;
 
 import com.appResP.residuosPatologicos.models.Transportista;
 import com.appResP.residuosPatologicos.persistence.ITransportistaDAO;
-import com.appResP.residuosPatologicos.repositories.ITransportista_Repository;
+import com.appResP.residuosPatologicos.persistence.repositories.ITransportista_Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

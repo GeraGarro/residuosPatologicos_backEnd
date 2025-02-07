@@ -1,8 +1,10 @@
 package com.appResP.residuosPatologicos.persistence.implementacion;
 
 import com.appResP.residuosPatologicos.models.Certificado;
+import com.appResP.residuosPatologicos.models.Transportista;
+import com.appResP.residuosPatologicos.models.enums.Meses;
 import com.appResP.residuosPatologicos.persistence.ICertificadoDAO;
-import com.appResP.residuosPatologicos.repositories.ICertificado_Repository;
+import com.appResP.residuosPatologicos.persistence.repositories.ICertificado_Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,4 +33,11 @@ public class CertificadoDAOImp implements ICertificadoDAO {
     public void deletebyID(Long id) {
         certificado_repositorio.deleteById(id);
     }
+
+    @Override
+    public boolean existsByTransportistaAndMesAndAnio(Transportista transportista, Meses mes, int anio) {
+        return certificado_repositorio.existsByTransportistaAndMesAndAño(transportista,mes,anio);
+    }
+
+
 }
