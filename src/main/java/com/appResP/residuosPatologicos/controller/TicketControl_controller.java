@@ -24,7 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200"  )
+
 
 @RequestMapping("api/TicketControl")
 public class TicketControl_controller {

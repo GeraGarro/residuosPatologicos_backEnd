@@ -12,7 +12,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
+
 @RequestMapping("/api/tipoResiduo")
 
 public class TipoResiduo_controller {
